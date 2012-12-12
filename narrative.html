@@ -145,7 +145,7 @@
                         );
 
                         try {
-                            var client = new InvocationService('http://bio-data-1.mcs.anl.gov/services/invocation');
+                            var client = new InvocationService('http://140.221.92.117:7064');
                             var files = client.list_files(window.$ld.login('session').user_id, '/narratives');
 
                             $.each(
