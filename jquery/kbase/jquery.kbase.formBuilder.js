@@ -152,6 +152,7 @@
 
                 console.log(keyed);
                 console.log(newRet);
+                ret = newRet;
             }
 
 
@@ -208,6 +209,10 @@
 
         getFormValuesAsString : function() {
             var extractedFormValues = this.getFormValues();
+
+            if (this.options.returnArrayStructure != undefined) {
+                return JSON.stringify(extractedFormValues);
+            }
 
             var returnValue = [];
 
