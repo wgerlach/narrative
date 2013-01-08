@@ -174,7 +174,7 @@
                 ret = strings;
             }
 
-            return ret.length == 1 && ! asArray
+            return ret.length == 1 && delim != undefined && ! asArray
                 ? ret[0]
                 : ret;
 
