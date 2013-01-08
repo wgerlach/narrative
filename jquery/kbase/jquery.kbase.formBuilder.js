@@ -68,6 +68,17 @@
                 var field = val.name;
                 var type = val.type;
 
+                var fields = [];
+
+                if (form[field] == '[object NodeList]') {
+                    for (var i = 0; i < form[field].length; i++) {
+                        fields.push(form[field][i]);
+                    }
+                }
+                else {
+                    fields = [ form[field] ];
+                }
+
                 if (type == 'checkbox') {
                     if (form[field].checked) {
                         ret.push([key]);
@@ -100,14 +111,73 @@
                     }
                 }
                 else {
-                    if (form[field].value.length) {
-                        ret.push([key, form[field].value])
+
+                    var res = [];
+                    for (var i = 0; i < fields.length; i++) {
+                        res.push( this.carve(fields[i].value, val.split, val.asArray) );
+                    }
+
+                    if (res.length > 0) {
+
+                        if (res.length == 1) {
+                            res = res[0];
+                            if (res.length == 0) {
+                                continue;
+                            }
+                        }
+
+                        ret.push([key, res]); //this.carve(form[field].value, val.split)]);
                     }
                 }
 
             }
 
             return ret;
+        },
+
+        carve : function(strings, delimiters, asArray) {
+
+            if (typeof strings == 'string') {
+                strings = [strings];
+            }
+
+            if (delimiters == undefined || typeof delimiters == 'string') {
+                delimiters = [delimiters];
+            }
+
+            delimiters = delimiters.slice(0);
+
+            var ret = [];
+
+            var delim = delimiters.shift();
+
+            if (delim != undefined) {
+                var delimRegex = new RegExp(' *' + delim + ' *');
+
+                jQuery.each(
+                    strings,
+                    jQuery.proxy(
+                        function (idx, str) {
+                            ret.push(
+                                this.carve(
+                                    str.split(delimRegex),
+                                    delimiters,
+                                    asArray
+                                )
+                            );
+                        },
+                        this
+                    )
+                );
+            }
+            else {
+                ret = strings;
+            }
+
+            return ret.length == 1 && delim != undefined && ! asArray
+                ? ret[0]
+                : ret;
+
         },
 
         escapeValue : function(val) {
@@ -134,7 +204,12 @@
                             returnValue.push( field[j] );
                         }
                         else {
-                            returnValue.push(field[0] + ' ' + this.escapeValue(field[j]));
+                            if (typeof field[j] == 'string') {
+                                returnValue.push(field[0] + ' ' + this.escapeValue(field[j]));
+                            }
+                            else {
+                                returnValue.push(field[0] + ' ' + this.escapeValue(JSON.stringify(field[j])));
+                            }
                         }
                     }
                 }
@@ -219,8 +294,10 @@
                             value.value = value.checked = value.selected = passedValues[value.key];
                         }
 
+                        var $field;
+
                         if (this.options.dispatch[value.type]) {
-                            $label.append( this[this.options.dispatch[value.type]](value) );
+                            $field = this[this.options.dispatch[value.type]](value);
                         }
                         else if (value.type == undefined) {
                             var errorMsg = "FORM ERROR. KEY " + value.key + ' HAS NO TYPE';
@@ -228,7 +305,33 @@
                             return false;
                         }
                         else {
-                            $label.append( this.buildTextField(value) );
+                            $field = this.buildTextField(value);
+                        }
+
+                        var $container = $('<span></span>');
+                        $container.css('display', 'inline-block');
+
+
+                        $label.append($container);
+                        $container.append($field);
+
+                        var $button = $('<button></button>')
+                                        .append('Add more\n')
+                                        .css({width : '19px', height : '18px'})
+                                        .button({text : false, icons : {primary : 'ui-icon-plus'}});
+
+                        $button.bind(
+                                            'click',
+                                            function (evt) {
+                                                //alert("Add more!");
+                                                $container.append($('<br/>'));
+                                                $container.append($field.clone());
+                                                evt.stopPropagation();
+                                            }
+                                        );
+
+                        if (value.multi) {
+                            $container.append($button);
                         }
 
                         $form.append($label);
