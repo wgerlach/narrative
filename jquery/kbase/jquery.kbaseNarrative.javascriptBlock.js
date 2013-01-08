@@ -78,7 +78,12 @@
 
                 console.log("RUNS COMMAND " + command);
                 console.log(this.client);
-                this.client[command](
+
+                var args = this.data('command-interface').formBuilder('getFormValues');
+                console.log("ARGS");console.log(args);
+
+                //tack on the success and failure callbacks.
+                args.push(
                     $.proxy(
                         function (res) {
                         console.log("GOT RESULTS");
@@ -109,6 +114,7 @@ console.log(this.options.id);console.log(this.narrative.user_id);
                     )
                 );
 
+                this.client[command].apply(this.client, args);
 
             }
 

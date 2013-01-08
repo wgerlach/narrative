@@ -1,4 +1,25 @@
 var metaToolInfo = {
+
+    getPODescriptions : function() {
+        return {
+            label      : 'Get PO Descriptions',
+            inputType  : [],
+            outputType : ['*'],
+            returnArrayStructure : ['ids'],
+
+            fields : [
+                {
+                    name    : 'ids',
+                    key     : 'ids',
+                    label   : 'IDs',
+                    type    : 'text',
+                    split   : ' ',
+                },
+            ],
+        }
+    },
+
+
     genomes_to_contigs : function() {
         return {
             label      : 'Convert Genomes to Contigs',

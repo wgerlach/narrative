@@ -53,7 +53,6 @@
                             if (prop.match(/_async$/)) {
                                 var method = prop.replace(/_async$/, '');
 
-
                                 var metaFunc = MetaToolInfo(method);
                                 var label = method;
                                 if (metaFunc != undefined) {

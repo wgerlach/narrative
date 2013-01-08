@@ -62,7 +62,7 @@ var PE_URL = 'http://140.221.84.160:7063';
 $("#leftcolumn").append('foo bar baz');
             var cdmi = new PlantExpression(PE_URL);
             console.log(cdmi);
-            cdmi.getAllPO_async(function (json) {
+            cdmi.getPODescriptions_async(["PO:0020100", "PO:0000009"], function (json) {
                 console.log("SUCCESS");console.log(json);
                 $("#leftcolumn").append($("<pre>").text(JSON.stringify(json)));
             },

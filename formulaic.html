@@ -35,6 +35,7 @@
                             description: "This is routine usage information. How does it work? Why is it here? Why should we use it?",
                             split : [';',','],
                         },
+//*
                         {
                             name : 'longer',
                             label : 'This is my first textarea',
@@ -93,6 +94,7 @@ type : 'text',
                             names  : ['alpha', 'beta', 'kappa', 'delta', 'epsilon', 'feta', 'gamma', 'hiero'],
                             checked : 'i',
                             selected : 'b',
+                            //asArray : 1,
 //                            fieldset : 'alpha',
                         },
 
@@ -107,13 +109,17 @@ type : 'text',
                             valOnly : 0,
                             multi : 1,
                         }
-
+//*/
                     ];
 
 
 
-                    $('#foobar').formBuilder({elements : elements, values :
-                        [['-g','d'], ['-f',0], ['-a','a OVERRIDE; 1,2,3; a,b,c; d,e,f'], ['-atxt','-atxt OVERRIDE']]
+                    $('#foobar').formBuilder({
+                    returnArrayStructure: ['-a', '-a', '-b', '-atxt'], elements : elements, values :
+                        [['-g','d'], ['-f',0],
+                        ['-a','a OVERRIDE; 1,2,3; a,b,c; d,e,f'],
+                        ['-atxt','-atxt OVERRIDE'],
+                        ['-a', 'a,b;1,2;X,Y']],
                     });
                     $('#g').login({style : 'micro'});
 

@@ -448,7 +448,13 @@
             this.data('command-interface').slidingPanel('remove');
 
             if (! this.data('input-initialized')) {
-                this.data('command-interface').formBuilder({elements : this.options.fields, values : this.options.values});
+                this.data('command-interface').formBuilder(
+                    {
+                        elements                : this.options.fields,
+                        values                  : this.options.values,
+                        returnArrayStructure    : this.options.returnArrayStructure
+                    }
+                );
                 this.data('input-initialized', 1);
             }
 
