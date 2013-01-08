@@ -95,6 +95,8 @@
                                     $('<li></li>')
                                         .append($('<a></a>')
                                             .attr('href', '#')
+                                            .attr('title', val)
+                                            .data('blockType', 'narrativeBlock')
                                             //.tooltip()
                                             .text(val)
                                             .bind(

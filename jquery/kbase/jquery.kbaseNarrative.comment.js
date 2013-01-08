@@ -105,9 +105,13 @@
         blockDefinition : function() {
             return {
                 comment : this.comment(),
-                type    : 'comment',
+                blockType    : 'comment',
                 id      : this.options.id,
             };
+        },
+
+        reposition : function() {
+            //nothing to do, really
         },
 
 

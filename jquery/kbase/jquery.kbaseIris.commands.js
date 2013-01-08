@@ -70,6 +70,7 @@
                                                         .append($('<a></a>')
                                                             .attr('href', '#')
                                                             .attr('title', val.cmd)
+                                                            .data('blockType', 'narrativeBlock')
                                                             .css('display', 'list-item')
                                                             //.tooltip()
                                                             .text(label)
@@ -103,12 +104,17 @@
                             )
                         );
 
-                        $elem.accordion({autoHeight : false, collapsible : true, fillSpace : true, active : false });
-
+                        this.loadedCallback($elem);
                     },
                     this
                 )
             );
+
+        },
+
+        loadedCallback : function($elem) {
+
+            $elem.accordion({autoHeight : false, collapsible : true, fillSpace : true, active : false });
 
         },
 

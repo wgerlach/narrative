@@ -14,23 +14,27 @@
 
 		<script type="text/javascript" src="./jquery/spinner/jquery.spinner.js"></script>
 
+        <script src = './js/kbase.js'></script>
+
         <script src = './jquery/kbase/jquery.kbase.widget.js'></script>
 
         <script src = './jquery/kbase/jquery.kbase.login.js'></script>
         <script src = './jquery/kbase/jquery.kbase.slidingPanel.js'></script>
         <script src = './jquery/kbase/jquery.kbase.formBuilder.js'></script>
         <script src = './jquery/kbase/jquery.kbaseNarrative.narrativeBlock.js'></script>
+        <script src = './jquery/kbase/jquery.kbaseNarrative.javascriptBlock.js'></script>
         <script src = './jquery/kbase/jquery.kbaseNarrative.comment.js'></script>
         <script src = './jquery/kbase/jquery.kbaseNarrative.narrative.js'></script>
         <script src = './jquery/kbase/jquery.kbaseNarrative.commandcontext.js'></script>
 
         <script src = './jquery/kbase/jquery.kbaseIris.commands.js'></script>
+        <script src = './jquery/kbase/jquery.kbaseNarrativePlants.commands.js'></script>
 
         <link type = 'text/css' href = 'http://ajax.googleapis.com/ajax/libs/jqueryui/1.9.0/themes/smoothness/jquery-ui.css' rel = 'stylesheet' />
 
         <script src = './js/MetaTool.js'></script>
 
-
+<script src = '../kb_seed/lib/javascript/CDMI/Client.js'></script>
 
         <script src="./js/InvocationService.js" type="text/javascript" charset="utf-8"></script>
 
@@ -54,11 +58,22 @@
 
                 $(function() {
 
+var PE_URL = 'http://140.221.84.160:7063';
+$("#leftcolumn").append('foo bar baz');
+            var cdmi = new PlantExpression(PE_URL);
+            console.log(cdmi);
+            cdmi.getAllPO_async(function (json) {
+                console.log("SUCCESS");console.log(json);
+                $("#leftcolumn").append($("<pre>").text(JSON.stringify(json)));
+            },
+            function (e) {
+            console.log("FAILED : "); console.log(e)});
+
                     $('#commandcontext').commandcontext(
                         {
                             link : function (evt) {
                                 var f = $("#workspaces").data('addNarrativeCommand');
-                                f($(this).text());
+                                f($(this).text(), $(this).data('blockType'));
                             }
                         }
                     );
@@ -79,13 +94,17 @@
                             connectToSortable : '.kb-nar-narrative',
                             link : function (evt) {
                                 var f = $("#workspaces").data('addNarrativeCommand');
-                                f($(this).attr('title'));
+                                f(
+                                    $(this).attr('title'),
+                                    $(this).data('blockType'),
+                                    $(this).data('blockOptions')
+                                );
                             }
                         }
                     );
 
 
-                    $('#workspaces').data('addNarrativeCommand', function(label) {
+                    $('#workspaces').data('addNarrativeCommand', function(label, blockType, blockOptions) {
 
                         if (label.length == 0) {
                             $('#add-custom-command-error').css('display', '');
@@ -97,8 +116,8 @@
                         var prompt = getParameterByName('version') == 'B'
                             ? 0
                             : 1;
-
-                        $( $selectedPanel.children()[0] ).narrative('addBlock', { name : label, prompt : prompt });
+console.log("ADDS " + label + ' of ' + blockType);
+                        $( $selectedPanel.children()[0] ).narrative('addBlock', { name : label, prompt : prompt, blockType: blockType, blockOptions : blockOptions });
                         $( $selectedPanel.children()[0] ).narrative('reposition');
                         //$(window).trigger('resize');
 
@@ -379,8 +398,6 @@
                         <div id="workspaces">
                             <ul>
                                 <li style = 'float : right'><a href='#add-workspace' id = 'add-tabs-button'><span class = 'ui-icon ui-icon-plus'>&nbsp;</span></a></li>
-                                <!--<li style = 'white-space : nowrap'><a href="#flowchart">Narrative (concept)</a> <span class='ui-icon ui-icon-close'>Remove Tab</span></li>-->
-                                <!--<li style = 'white-space : nowrap'><a href="#iris-terminal">Iris Terminal</a> <span class='ui-icon ui-icon-close'>Remove Tab</span></li>-->
                             </ul>
                             <div class = 'ui-widget' id = 'add-workspace'></div>
 

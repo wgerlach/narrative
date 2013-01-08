@@ -65,30 +65,18 @@
                         instructions.elements,
                         $.proxy(
                             function(idx, val) {
-                                if (val.type == 'comment') {
+                                val.noSave = true;
+                                if (val.blockType == 'comment') {
                                     this.addComment(
                                         {
                                             value   : val.comment,
                                             id      : val.id,
-                                            noSave  : true,
                                         }
                                     );
                                 }
-                                else if (val.type == 'narrativeBlock') {
+                                else {
 
-                                    var $block = this.addBlock(
-                                        {
-                                            name : val.name,
-                                            fields : val.fields,
-                                            inputType : val.inputType,
-                                            outputType : val.outputType,
-                                            id : val.id,
-                                            outputTruncate : val.outputTruncate,
-                                            values : val.values,
-                                            lastRun : val.lastRun,
-                                            noSave : true,
-                                        }
-                                    );
+                                    var $block = this.addBlock(val);
 
                                     this.client.get_file_async(
                                         this.user_id,
@@ -96,7 +84,7 @@
                                         this.wd,
                                         $.proxy(
                                             function (res) {
-                                                this.narrativeBlock('appendOutputUI', res);
+                                                this[val.blockType]('appendOutputUI', res);
                                             },
                                             $block
                                         ),
@@ -147,6 +135,7 @@
                 function (idx, val) {
                     var blockType = $(val).data('blockType');
                     if ($(val)[blockType]) {
+                    console.log("BLOCK DEF" + blockType);
                         output.elements.push($(val)[blockType]('blockDefinition'));
                     }
                 }
@@ -178,6 +167,10 @@
                 options.id = this.generateBlockID();
             }
 
+            //if (options.blockType == undefined) {
+            //    options.blockType = 'narrativeBlock';
+            //}
+
             var $target = undefined;
             if (options.target) {
                 $target = options.target;
@@ -190,18 +183,27 @@
                 options.prompt = undefined;
             }
 
-            options.narrative = this;
+            if (options.blockOptions) {
+                for (prop in options.blockOptions) {
+                    options[prop] = options.blockOptions[prop];
+                }
+                options.blockOptions = undefined;
+            }
 
+            options.narrative = this;
+console.log("OPTS");console.log(options);
             var metaFunc = MetaToolInfo(options.name);
 
             if (metaFunc != undefined) {
+            console.log(options);
+            console.log(metaFunc);
                 var meta = metaFunc(options.name);
                 for (key in meta) {
                     options[key] = meta[key];
                 }
             }
-
-            var $block = $('<div></div>').narrativeBlock(options);
+console.log("ADDS WITH OPTIONS"); console.log(options);
+            var $block = $('<div></div>')[options.blockType](options);
 
             if ($target) {
                 $target.replaceWith($block);
@@ -217,7 +219,7 @@
                 this.save();
             }
 
-            $block.narrativeBlock('reposition');
+            $block[options.blockType]('reposition');
 
             //THIS IS A TEMPORARY HACK!
             $('#commandcontext').commandcontext('refresh');
@@ -227,7 +229,7 @@
             }, 450);
 
             if (prompt) {
-                $block.narrativeBlock('prompt');
+                $block[options.blockType]('prompt');
             }
 
             return $block;
@@ -343,9 +345,7 @@
                 this.data('workspace').children(),
                 function (idx, val) {
                     var blockType = $(val).data('blockType');
-                    if (blockType == 'narrativeBlock') {
-                        $(val).narrativeBlock('reposition');
-                    }
+                    $(val)[blockType]('reposition');
                 }
             );
         },

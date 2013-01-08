@@ -10,6 +10,7 @@
     $.widget("kbaseNarrative.narrativeBlock", $.kbase.widget, {
         version: "1.0.0",
         options: {
+            blockType : 'narrativeBlock',
             name : 'COMMAND',
             outputTruncate : 2000,
             fields :
@@ -41,7 +42,7 @@
                 this.appendOutputUI(this.options.output);
             }
 
-            $(this.element).data('blockType', 'narrativeBlock');
+            $(this.element).data('blockType', this.options.blockType);
 
             //$(window).trigger('resize');
             if (this.narrative) {
@@ -507,7 +508,7 @@
 
             return {
                 values : this.data('command-interface').formBuilder('getFormValues'),
-                type    : 'narrativeBlock',
+                blockType    : this.options.blockType,
                 id      : this.options.id,
                 fields  : this.options.fields,
                 name    : this.options.name,
