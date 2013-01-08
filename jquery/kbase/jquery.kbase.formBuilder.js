@@ -86,11 +86,18 @@
                 }
                 else if (type == 'multiselect') {
                     var selectedValues = [key];
+                    var fieldValues = selectedValues;
+
+                    if (val.asArray) {
+                        fieldValues = [];
+                        selectedValues.push(fieldValues);
+                    }
+
                     var hasSelection = 0;
                     for (var i = 0; i < form[field].length; i++) {
                         if (form[field][i].selected) {
                             hasSelection = 1;
-                            selectedValues.push(form[field][i].value);
+                            fieldValues.push(form[field][i].value);
                         }
                     }
                     if (hasSelection) {
@@ -132,51 +139,65 @@
 
             }
 
+            if (this.options.returnArrayStructure != undefined) {
+                var newRet = [];
+                var keyed = {};
+                for (var i = 0; i < ret.length; i++) {
+                    keyed[ret[i][0]] = ret[i][1];
+                }
+
+                for (var i = 0; i < this.options.returnArrayStructure.length; i++) {
+                    newRet.push(keyed[this.options.returnArrayStructure[i]]);
+                }
+
+                console.log(keyed);
+                console.log(newRet);
+            }
+
+
             return ret;
         },
 
-        carve : function(strings, delimiters, asArray) {
-
-            if (typeof strings == 'string') {
-                strings = [strings];
-            }
-
-            if (delimiters == undefined || typeof delimiters == 'string') {
-                delimiters = [delimiters];
-            }
-
-            delimiters = delimiters.slice(0);
-
-            var ret = [];
+        carve : function (strings, delimiters, asArray) {
+        console.log("ENTER WITH");console.log(strings);console.log(delimiters);console.log(asArray);
+            delimiters = delimiters == undefined
+                //nothing passed, make it an empty array
+                ? []
+                //otherwise, is it a string?
+                : typeof delimiters == 'string'
+                    //put it into an array if we have delimiters
+                    ? [ delimiters ]
+                    //failing all that, assume it's an array and make a copy of it
+                    : delimiters.slice(0);
 
             var delim = delimiters.shift();
 
-            if (delim != undefined) {
-                var delimRegex = new RegExp(' *' + delim + ' *');
+            if (delim == undefined) {
+                if (asArray && typeof strings == 'string') {
+                    strings = [strings];
+                }
+                return strings;
+            }
 
+            var delimRegex = new RegExp(' *' + delim + ' *');
+
+            if (typeof strings == 'string') {
+                return this.carve(strings.split(delimRegex), delimiters, asArray);
+            }
+            else {
+                delimiters.push(delim);
                 jQuery.each(
                     strings,
-                    jQuery.proxy(
+                    $.proxy(
                         function (idx, str) {
-                            ret.push(
-                                this.carve(
-                                    str.split(delimRegex),
-                                    delimiters,
-                                    asArray
-                                )
-                            );
+                            strings[idx] = this.carve(str, delimiters, asArray);
                         },
                         this
                     )
-                );
-            }
-            else {
-                ret = strings;
+                )
             }
 
-            return ret.length == 1 && delim != undefined && ! asArray
-                ? ret[0]
-                : ret;
+            return strings;
 
         },
 
