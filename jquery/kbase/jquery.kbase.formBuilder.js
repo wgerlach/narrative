@@ -150,8 +150,6 @@
                     newRet.push(keyed[this.options.returnArrayStructure[i]]);
                 }
 
-                console.log(keyed);
-                console.log(newRet);
                 ret = newRet;
             }
 
@@ -160,7 +158,7 @@
         },
 
         carve : function (strings, delimiters, asArray) {
-        console.log("ENTER WITH");console.log(strings);console.log(delimiters);console.log(asArray);
+
             delimiters = delimiters == undefined
                 //nothing passed, make it an empty array
                 ? []

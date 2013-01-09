@@ -19,6 +19,24 @@ var metaToolInfo = {
         }
     },
 
+    networkType2Datasets : function() {
+        return {
+            label      : 'Network Type to Datasets',
+            inputType  : [],
+            outputType : ['*'],
+            returnArrayStructure : ['networkTypes'],
+
+            fields : [
+                {
+                    name    : 'networkTypes',
+                    key     : 'networkTypes',
+                    label   : 'Network Type',
+                    type    : 'text',
+                    //split   : ' ',
+                },
+            ],
+        }
+    },
 
     genomes_to_contigs : function() {
         return {
