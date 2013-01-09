@@ -43,7 +43,8 @@
                             value : 'But will it work',
                             key : '-atxt',
 //                            fieldset : 'alpha',
-                            description: "This is routine usage information. How does it work? Why is it here? Why should we use it?"
+                            description: "This is routine usage information. How does it work? Why is it here? Why should we use it?",
+                            json : 1,
                         },
                         {
                             name : 'bar',
@@ -115,7 +116,8 @@ type : 'text',
 
 
                     $('#foobar').formBuilder({
-                    returnArrayStructure: ['-a', '-a', '-b', '-atxt'], elements : elements, values :
+                    //returnArrayStructure: ['-a', '-a', '-b', '-atxt'],
+                    elements : elements, values :
                         [['-g','d'], ['-f',0],
                         ['-a','a OVERRIDE; 1,2,3; a,b,c; d,e,f'],
                         ['-atxt','-atxt OVERRIDE'],
@@ -130,6 +132,7 @@ $('#extract').bind('click',
     function(evt) {
         var string = $('#foobar').formBuilder('getFormValuesAsString');
         console.log(string);
+        console.log($('#foobar').formBuilder('getFormValues'));
     }
 );
 

@@ -845,6 +845,7 @@ function KBaseNetworks(url) {
                                     url: _url,
                                     success: function (data, status, xhr)
 				{
+				    console.log("DATA");console.log(data);
 				    resp = JSON.parse(data);
 				    var result = resp["result"];
 				    if (num_rets == 1)

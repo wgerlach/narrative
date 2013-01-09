@@ -32,11 +32,147 @@ var metaToolInfo = {
                     key     : 'networkTypes',
                     label   : 'Network Type',
                     type    : 'text',
-                    //split   : ' ',
                 },
             ],
         }
     },
+
+    datasetSource2Datasets : function() {
+        return {
+            label      : 'Dataset Source to Datasets',
+            inputType  : [],
+            outputType : ['datasets'],
+            returnArrayStructure : ['datasetSource'],
+
+            fields : [
+                {
+                    name    : 'datasetSource',
+                    key     : 'datasetSource',
+                    label   : 'Dataset Source',
+                    type    : 'text',
+                    //json    : 1,
+                    //asArray : 1,
+                },
+            ],
+        }
+    },
+
+    get_all_experiments : function() {
+        return {
+            label      : 'Get all experiments',
+            inputType  : [],
+            outputType : ['experiments'],
+            returnArrayStructure : ['kb_genome'],
+
+            fields : [
+                {
+                    name    : 'kb_genome',
+                    key     : 'kb_genome',
+                    label   : 'KBase Genome',
+                    type    : 'text',
+                },
+            ],
+        }
+    },
+    traits_to_variations : function() {
+        return {
+            label      : 'Traits to Variations',
+            inputType  : [],
+            outputType : ['*'],
+            returnArrayStructure : ['traits'],
+
+            fields : [
+                {
+                    name    : 'traits',
+                    key     : 'traits',
+                    label   : 'Trait',
+                    type    : 'text',
+                },
+            ],
+        }
+    },
+    chromosome_position_from_variation_details : function() {
+        return {
+            label      : 'Chromosome position from Variation Details',
+            inputType  : [],
+            outputType : ['*'],
+            returnArrayStructure : ['variation_details'],
+
+            fields : [
+                {
+                    name    : 'variation_details',
+                    key     : 'variation_details',
+                    label   : 'Variation Details',
+                    type    : 'text',
+                },
+            ],
+        }
+    },
+    variations_to_genes : function() {
+        return {
+            label      : 'Variations to Genes',
+            inputType  : [],
+            outputType : ['*'],
+            returnArrayStructure : ['variations_to_genes'],
+
+            fields : [
+                {
+                    name    : 'variations_to_genes',
+                    key     : 'variations_to_genes',
+                    label   : 'Variations to Genes',
+                    type    : 'text',
+                },
+            ],
+        }
+    },
+    find_common_snps : function() {
+        return {
+            label      : 'Find common SNPs',
+            inputType  : [],
+            outputType : ['*'],
+            returnArrayStructure : ['snps'],
+
+            fields : [
+                {
+                    name    : 'snps',
+                    key     : 'snps',
+                    label   : 'SNPs',
+                    type    : 'text',
+                },
+            ],
+        }
+    },
+    traits_to_genes : function() {
+        return {
+            label      : 'Traits to Genes',
+            inputType  : [],
+            outputType : ['*'],
+            returnArrayStructure : ['traits', 'pvaluecutoff', 'distance'],
+
+            fields : [
+                {
+                    name    : 'traits',
+                    key     : 'traits',
+                    label   : 'Trait',
+                    type    : 'text',
+                },
+                {
+                    name    : 'pvaluecutoff',
+                    key     : 'pvaluecutoff',
+                    label   : 'P Value Cutoff',
+                    type    : 'text',
+                },
+                {
+                    name    : 'distance',
+                    key     : 'distance',
+                    label   : 'Distance',
+                    type    : 'text',
+                },
+            ],
+        }
+    },
+
+
 
     genomes_to_contigs : function() {
         return {

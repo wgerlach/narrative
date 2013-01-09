@@ -121,7 +121,17 @@
 
                     var res = [];
                     for (var i = 0; i < fields.length; i++) {
-                        res.push( this.carve(fields[i].value, val.split, val.asArray) );
+
+                        if (val.json) {
+                            var json = JSON.parse(fields[i].value);
+                            if (val.asArray) {
+                                json = [ json ];
+                            }
+                            res.push(json);
+                        }
+                        else {
+                            res.push( this.carve(fields[i].value, val.split, val.asArray) );
+                        }
                     }
 
                     if (res.length > 0) {
