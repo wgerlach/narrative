@@ -12,11 +12,17 @@
         options: {
             link : function (evt) {
                 alert("clicked on " + $(evt.target).text());
-            }
+            },
+            englishCommands : 1,
         },
 
         _create : function() {
-            this.client = new InvocationService();
+            if (this.options.client) {
+                this.client = this.options.client;
+            }
+            else {
+                this.client = new InvocationService('http://bio-data-1.mcs.anl.gov/services/invocation');
+            }
             return this;
         },
 
@@ -29,7 +35,6 @@
         },
 
         appendUI : function($elem) {
-
             this.client.valid_commands_async(
                 $.proxy(
                     function (res) {
@@ -58,11 +63,14 @@
                                         group.items,
                                         $.proxy(
                                             function (idx, val) {
-                                                var metaFunc = MetaToolInfo(val.cmd);
                                                 var label = val.cmd;
-                                                if (metaFunc != undefined) {
-                                                    var meta = metaFunc(val.cmd);
-                                                    label = meta.label;
+                                                if (this.options.englishCommands) {
+
+                                                    var metaFunc = MetaToolInfo(val.cmd);
+                                                    if (metaFunc != undefined) {
+                                                        var meta = metaFunc(val.cmd);
+                                                        label = meta.label;
+                                                    }
                                                 }
 
                                                 $ul.append(
@@ -114,7 +122,7 @@
 
         loadedCallback : function($elem) {
 
-            $elem.accordion({autoHeight : false, collapsible : true, fillSpace : true, active : false });
+            $elem.accordion({heightStyle : 'fill', collapsible : true, active : false });
 
         },
 

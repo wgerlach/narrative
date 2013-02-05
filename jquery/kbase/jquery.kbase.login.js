@@ -56,7 +56,8 @@
         version: "1.0.0",
         options: {
             style : 'button',
-            loginURL : "http://kbase.us/services/authorization/Sessions/Login",
+            loginURL : "http://140.221.92.231/services/authorization/Sessions/Login",
+            //loginURL : "http://kbase.us/services/authorization/Sessions/Login",
             login_button_options : {label : 'Login'},
             possibleFields : ['verified','name','opt_in','kbase_sessionid','token','groups','user_id','email','system_admin'],
             fields : ['name', 'kbase_sessionid', 'user_id', 'token'],
@@ -76,6 +77,8 @@
 
         for (var i = 0; i < pairs.length; i++) {
             var set = pairs[i].split('=');
+            set[1] = set[1].replace(/PIPESIGN/g, '|');
+            set[1] = set[1].replace(/EQUALSSIGN/g, '=');
             chips[set[0]] = set[1];
         }
 
@@ -109,6 +112,7 @@
                 this.data('_session', kbaseCookie);
 
             }
+            this.data('foobar', 'baz');
 
         },
 
@@ -270,6 +274,8 @@
                         this.data('password').val('');
                         this.data("loggedinuser_id").text(args.name);
                         this.data("userdisplay").show();
+                        this.data('loginDialog').trigger('clearMessages');
+                        this.data('loginDialog').dialog('close');
                     }
                     else {
                         $(function() {
@@ -340,6 +346,8 @@
                     this
                 )
             );
+
+            this._createLoginDialog();
 
             return $prompt;
 
@@ -648,7 +656,8 @@
                             $('form', $ld).get(0).reset();
                             //assign the user_id, if one is provided.
                             $ld.data("user_id").focus();
-                            $ld.data("user_id").val( this.session('user_id') || this.options.user_id );
+
+                            $ld.data("user_id").val( this.session('user_id') || this.data('passed_user_id') || this.options.user_id );
                             delete this.options.user_id;
                             this.session('user_id',undefined);
                             if ($ld.data('user_id').val()) {
@@ -740,8 +749,12 @@
                                     var fields = this.options.fields;
 
                                     for (var i = 0; i < fields.length; i++) {
-                                        args[fields[i]] = data[fields[i]];
-                                        cookieArray.push(fields[i] + '=' + data[fields[i]]);
+                                        //quick 'n dirty escaping 'til I put in something better
+                                        var value = data[fields[i]];
+                                        args[fields[i]] = value;
+                                        value = value.replace(/=/g, 'EQUALSSIGN');
+                                        value = value.replace(/\|/g, 'PIPESIGN');
+                                        cookieArray.push(fields[i] + '=' + value);
                                     }
 
                                     $.cookie('kbase_session', cookieArray.join('|'));
