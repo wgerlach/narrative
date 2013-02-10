@@ -28,13 +28,10 @@
         <script src = './jquery/kbase/jquery.kbaseNarrative.commandcontext.js'></script>
 
         <script src = './jquery/kbase/jquery.kbaseIris.commands.js'></script>
-        <script src = './jquery/kbase/jquery.kbaseNarrativePlants.commands.js'></script>
 
         <link type = 'text/css' href = 'http://ajax.googleapis.com/ajax/libs/jqueryui/1.9.0/themes/smoothness/jquery-ui.css' rel = 'stylesheet' />
 
         <script src = './js/MetaTool.js'></script>
-
-<script src = '../kb_seed/lib/javascript/CDMI/Client.js'></script>
 
         <script src="./js/InvocationService.js" type="text/javascript" charset="utf-8"></script>
 
@@ -43,6 +40,26 @@
 		<script type="text/javascript">
 
             <!--
+
+                function newWorkspaceCallback(files) {
+                console.log("FILES ARE HERE!");
+                    console.log(files);
+                    try {
+                        $.each(
+                            files[0],
+                            function (idx, val) {
+                                $('#narrative_list').append(
+                                    $('<option></option>')
+                                        .attr('value', val.name)
+                                        .append(val.name)
+                                );
+                            }
+                        );
+                    }
+                    catch (e) {};
+
+                    $('#add-workspace-dialog').dialog( "open" );
+                }
 
                 function getParameterByName(name)
                 {
@@ -58,17 +75,6 @@
 
                 $(function() {
 
-            /*var PE_URL = 'http://140.221.84.160:7063';
-            $("#leftcolumn").append('foo bar baz');
-            var cdmi = new PlantExpression(PE_URL);
-            console.log(cdmi);
-            cdmi.getPOSampleIDList_async(["PO:0020100", "PO:0000009"], function (json) {
-                console.log("SUCCESS");console.log(json);
-                $("#leftcolumn").append($("<pre>").text(JSON.stringify(json)));
-            },
-            function (e) {
-            console.log("FAILED : "); console.log(e)});//*/
-
                     $('#commandcontext').commandcontext(
                         {
                             link : function (evt) {
@@ -83,14 +89,30 @@
 		                    style : 'slim',
 		                    login_callback : function(args) {
 		                        if (this.session('user_id')) {
-		                            var client = new InvocationService('http://bio-data-1.mcs.anl.gov/services/invocation');
-                                    client.start_session(this.session('user_id'));
+                                    client.start_session_async(this.session('user_id'), function (res) {}, function (e){ console.log(e);} );
                                 }
 		                    }
 		                });
 
+                    var client = new InvocationService('http://140.221.84.183:7049', undefined,
+                                jQuery.proxy(function() {
+                                    var cookie_obj = window.$ld.login('get_kbase_cookie');
+                                    if (cookie_obj)
+                                    {
+                                    var token = cookie_obj['token'];
+                                    console.log("returning token from auth_cb " + token);
+                                    return token;
+                                    }
+                                    else
+                                    {
+                                    console.log("returning undef from auth_cb ");
+                                    return undefined;
+                                    }
+                                }, this));
+
                     $('#command-list').commands(
                         {
+                            client : client,
                             connectToSortable : '.kb-nar-narrative',
                             link : function (evt) {
                                 var f = $("#workspaces").data('addNarrativeCommand');
@@ -133,7 +155,7 @@ console.log("ADDS " + label + ' of ' + blockType);
 
                             var name = $(ui.tab).text();
                             $(ui.panel).css('visibility', 'hidden');
-                            var $narrative = $('<div></div>').narrative({name : name});
+                            var $narrative = $('<div></div>').narrative({name : name, client : client});
 
                             $(ui.panel).append( $narrative );
                             $narrative.narrative('reposition');
@@ -182,25 +204,14 @@ console.log("ADDS " + label + ' of ' + blockType);
                                 .append('-----')
                         );
 
-                        try {
-                            var client = new InvocationService('http://bio-data-1.mcs.anl.gov/services/invocation');
-                            var files = client.list_files(window.$ld.login('session').user_id, '/narratives');
+                        client.list_files_async(
+                            window.$ld.login('session').user_id,
+                            '/',
+                            'narratives',
+                            newWorkspaceCallback,
+                            newWorkspaceCallback
+                        );
 
-                            $.each(
-                                files[0],
-                                function (idx, val) {
-                                    $('#narrative_list').append(
-                                        $('<option></option>')
-                                            .attr('value', val.name)
-                                            .append(val.name)
-                                    );
-                                }
-                            );
-
-                        }
-                        catch (e) {};
-
-                        $('#add-workspace-dialog').dialog( "open" );
                     });
 
 
@@ -427,7 +438,7 @@ console.log("ADDS " + label + ' of ' + blockType);
                         </div>
                     </div>
 
-                    <div class = 'ui-widget' style = 'height : 350px'>
+                    <div class = 'ui-widget' style = 'height : 550px'>
                         <h3 class="ui-widget-header ui-corner-bottom" style = 'padding : 5px; margin-top : 0px; text-align : center; border-top : 0px '>
                             Command list
                         </h3>

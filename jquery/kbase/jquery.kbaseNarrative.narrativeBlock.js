@@ -355,7 +355,7 @@
                     command += ' > ' + this.options.id + ' ';
                 }
                 console.log("RUNS COMMAND " + command);
-                this.narrative.client.run_pipeline2_async(
+                this.narrative.client.run_pipeline_async(
                     this.narrative.user_id,
                     command,
                     [],
@@ -363,8 +363,8 @@
                     this.narrative.wd,
                     $.proxy(
                         function (res) {
-
-                            if (! res[1][0].match(/ 0$/)) {
+console.log(res);
+                            if (res[1][0] != undefined && ! res[1][0].match(/ 0$/)) {
                                 var errorMsg = res[1].join("");
                                 this.appendOutputUI(errorMsg);
                                 this.enterErrorState();

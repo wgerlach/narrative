@@ -20,9 +20,6 @@
             if (this.options.client) {
                 this.client = this.options.client;
             }
-            else {
-                this.client = new InvocationService('http://bio-data-1.mcs.anl.gov/services/invocation');
-            }
             return this;
         },
 

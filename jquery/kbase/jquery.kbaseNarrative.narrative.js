@@ -14,94 +14,118 @@
             blockCounter : 0,
         },
 
+        makeNarrativesDirCallback : function (results) {
+console.log("WD " + this.wd);
+            this.client.list_files_async(
+                this.user_id,
+                '/',
+                this.wd,
+                jQuery.proxy(this.listNarrativesCallback, this),
+                jQuery.proxy(this.listNarrativesErrorCallback, this)
+            );
+
+        },
+
+        listNarrativesCallback : function (res) {
+
+            var savedNarrative = this.client.get_file_async(
+                this.user_id,
+                'narrative.data',
+                this.wd,
+                jQuery.proxy(
+                    function (savedNarrative) {
+                        var instructions = JSON.parse(savedNarrative);
+
+                        this.options.blockCounter = instructions.blockCounter;
+                        this.options.name = instructions.name;
+                        this.user_id = instructions.owner;
+                        this.wd = instructions.wd;
+
+                        $.each(
+                            instructions.elements,
+                            $.proxy(
+                                function(idx, val) {
+                                    val.noSave = true;
+                                    if (val.blockType == 'comment') {
+                                        this.addComment(
+                                            {
+                                                value   : val.comment,
+                                                id      : val.id,
+                                            }
+                                        );
+                                    }
+                                    else {
+
+                                        var $block = this.addBlock(val);
+
+                                        this.client.get_file_async(
+                                            this.user_id,
+                                            val.id,
+                                            this.wd,
+                                            $.proxy(
+                                                function (res) {
+                                                    this[val.blockType]('appendOutputUI', res);
+                                                },
+                                                $block
+                                            ),
+                                            function (err) { console.log("FILE FAILURE"); console.log(err) }
+                                        );
+
+                                    }
+                                },
+                                this
+                            )
+                        );
+                    },
+                   this
+                ),
+                jQuery.proxy(this.errorCallback, this)
+            );
+
+        },
+
+        listNarrativesErrorCallback : function (e) {
+            this.client.make_directory_async(
+                this.user_id,
+                '/',
+                this.wd,
+                jQuery.proxy(
+                    function (res) {
+                        this.addComment(
+                            {
+                                'value' : 'Click on a command on the left to add it to the queue.\nDrag and drop to re-arrange if you forgot something!'
+                            }
+                        );
+                    },
+                    this
+                ),
+                jQuery.proxy(this.errorCallback, this)
+            );
+        },
+
+        errorCallback : function (e) {
+            console.log(e);
+        },
+
         _create : function() {
-            this.client = new InvocationService();
+            this.client = this.options.client;
 
             this.user_id = window.$ld.login('session').user_id;
             this.wd = '/narratives/' + this.options.name;
-
 
             this.appendUI( $( this.element ) );
 
             if (this.options.output) {
                 this.appendOutputUI(this.options.output);
             }
-
-            try {
-                this.client.make_directory(this.user_id, '/', 'narratives');
-            }
-            catch (e) {
-                //already has narratives directory
-                //console.log("already has narrative");console.log(e);
-            }
-
-            var previouslySaved = 0;
-
-            try{
-                var res = this.client.list_files(this.user_id, this.wd);
-
-                if (res) {
-                    previouslySaved = 1;
-                }
-            }
-            catch(e) {
-                this.client.make_directory(this.user_id, this.wd);
-                this.addComment({'value' : 'Click on a command on the left to add it to the queue.\nDrag and drop to re-arrange if you forgot something!'});
-            }
-
-            if (previouslySaved) {
-                //console.log('loading prior narrative');
-
-                try {
-                    var savedNarrative = this.client.get_file(this.user_id, 'narrative.data', this.wd);
-                    var instructions = JSON.parse(savedNarrative);
-
-                    this.options.blockCounter = instructions.blockCounter;
-                    this.options.name = instructions.name;
-                    this.user_id = instructions.owner;
-                    this.wd = instructions.wd;
-
-                    $.each(
-                        instructions.elements,
-                        $.proxy(
-                            function(idx, val) {
-                                val.noSave = true;
-                                if (val.blockType == 'comment') {
-                                    this.addComment(
-                                        {
-                                            value   : val.comment,
-                                            id      : val.id,
-                                        }
-                                    );
-                                }
-                                else {
-
-                                    var $block = this.addBlock(val);
-
-                                    this.client.get_file_async(
-                                        this.user_id,
-                                        val.id,
-                                        this.wd,
-                                        $.proxy(
-                                            function (res) {
-                                                this[val.blockType]('appendOutputUI', res);
-                                            },
-                                            $block
-                                        ),
-                                        function (err) { console.log("FILE FAILURE"); console.log(err) }
-                                    );
-
-                                }
-                            },
-                            this
-                        )
-                    );
-
-                }
-                catch(e) {
-                    console.log(e);
-                }
-            }
+console.log(this.user_id);
+            this.client.make_directory_async(
+                this.user_id,
+                '/',
+                'narratives',
+                jQuery.proxy(this.makeNarrativesDirCallback, this),
+                jQuery.proxy(this.makeNarrativesDirCallback, this)
+            );
 
             $(window).bind(
                 'resize',
@@ -142,8 +166,15 @@
             );
 
             var json = JSON.stringify(output);
-
-            this.client.put_file(this.user_id, 'narrative.data', json, this.wd);
+console.log("SAVES " + json);
+            this.client.put_file_async(
+                this.user_id,
+                'narrative.data',
+                json,
+                this.wd,
+                function (e) {console.log("SAVED");},
+                jQuery.proxy(this.errorCallback, this)
+            );
         },
 
         generateBlockID: function () {
