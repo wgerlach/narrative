@@ -26,6 +26,21 @@ console.log("WD " + this.wd);
 
         },
 
+        listNarratives : function (callback, errorCallback) {
+
+            if (errorCallback == undefined) {
+                errorCallback = this.errorCallback;
+            }
+
+            this.client.list_files_async(
+                this.user_id,
+                '/',
+                'narratives',
+                jQuery.proxy(callback, this),
+                jQuery.proxy(errorCallback, this)
+            );
+        },
+
         listNarrativesCallback : function (res) {
 
             var savedNarrative = this.client.get_file_async(

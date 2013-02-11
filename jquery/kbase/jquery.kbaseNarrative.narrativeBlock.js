@@ -25,6 +25,7 @@
                 ],
             inputType   : ['*'],
             outputType  : ['*'],
+            links : []
         },
 
         _init: function() {
@@ -43,6 +44,13 @@
             }
 
             $(this.element).data('blockType', this.options.blockType);
+
+            jQuery.each(
+                this.options.links,
+                jQuery.proxy (function (idx, val) {
+                    this.addLink(val[0], val[1], 1, idx);
+                }, this)
+            );
 
             //$(window).trigger('resize');
             if (this.narrative) {
@@ -132,6 +140,14 @@
                     $('<div></div>')
                         .attr('style', 'margin-top : 5px;min-height : 150px; float : left; width : 100%;')
                         .attr('id', 'command-interface')
+                )
+                .append(
+                    $('<div></div>')
+                        .attr('style', 'margin-top : 1px;margin-bottom : 1px; width : 100%; border : 1px solid blue')
+                        .append(
+                            $('<ul></ul>')
+                                .attr('id', 'cross-links')
+                            )
                 )
                 .append($('<div></div>')
                     .attr('style', 'font-size : 50%; text-align : right; color : gray; clear : both')
@@ -223,13 +239,154 @@
                 }
             );
 
+            var $linkDialog = $('<div></div>')
+                .append(
+                    $('<div></div>')
+                        .attr('id', 'linkDialogContent')
+                )
+                .dialog(
+                    {
+                        title : 'Link to narrative',
+                        autoOpen : false,
+                        modal : true,
+                        resizable: false,
+                        buttons : {
+                            Cancel : function () {
+                                $( this ).dialog('close');
+                            },
+                            Link :
+                                $.proxy(
+                                    function() {
+
+                                        var values = this.data('linkDialogContent').formBuilder('getFormValues');
+                                        console.log(values);
+
+                                        this.addLink(values[0][1], values[1][1]);
+
+                                        $linkDialog.dialog('close');
+                                        if (this.narrative != undefined) {
+                                            this.narrative.save();
+                                            this.narrative.reposition();
+                                        }
+
+                                    },
+                                    this
+                                )
+                        },
+                        open :  function () {
+                            $('button:last', $(this).parent()).focus();
+                        }
+                    }
+                );
+            ;
+
+            this._rewireIds($linkDialog, this);
+
             this.data('linkbutton').bind(
                 'click',
-                function (evt) {
-                    alert("We can't socialize. Yet.");
-                    evt.stopPropagation();
-                }
+                jQuery.proxy(function (evt) {
+
+                    this.narrative.listNarratives(
+                        jQuery.proxy(
+                            function (filelist) {
+                            console.log(filelist);
+                                var dirs = filelist[0];
+                                var files = filelist[1];
+
+                                this.data('linkDialogContent').empty();
+
+                                var elements = [];
+
+                                jQuery.each(
+                                    dirs,
+                                    function (idx, val) {
+                                        console.log(val);
+                                        elements.push(val['name']);
+                                    }
+                                );
+
+                                this.data('linkDialogContent').formBuilder(
+                                    {
+                                            elements : [
+                                                {
+                                                    name : 'narrative',
+                                                    key : 'narrative',
+                                                    label : 'Narrative',
+                                                    type : 'enum',
+                                                    values : elements,
+                                                    valOnly : 0,
+                                                    multi : 0,
+                                                },
+                                                {
+                                                    name : 'reason',
+                                                    key : 'reason',
+                                                    label : 'Reason',
+                                                    type : 'text',
+                                                },
+                                            ]
+                                    }
+                                );
+                            },
+                            this
+                        )
+
+                    );
+
+                    $linkDialog.dialog('open');
+                }, this)
             );
+
+            this.$deleteLinkDialog = $('<div></div>')
+                .append(
+                    $('<div></div>')
+                        .text('Really delete link?')
+                )
+                .dialog(
+                    {
+                        title : 'Delete link to narrative',
+                        autoOpen : false,
+                        modal : true,
+                        resizable: false,
+                        buttons : {
+                            Cancel : function () {
+                                $( this ).dialog('close');
+                            },
+                            Delete :
+                                $.proxy(
+                                    function() {
+console.log(this.options.links);
+                                        this.options.links.splice(this.data('deleteLinkIndex'), 1);
+
+                                        var narrative = this.data('deleteLink');
+
+                                        this.data('link-' + narrative).remove();
+
+                                        jQuery.each(
+                                            this.options.links,
+                                            function (idx, val) {
+                                                if (val == narrative) {
+                                                    this.options.links.splice(idx, 1);
+                                                    return;
+                                                }
+                                            }
+                                        )
+
+                                        this.$deleteLinkDialog.dialog('close');
+                                        if (this.narrative != undefined) {
+                                            this.narrative.save();
+                                            this.narrative.reposition();
+                                        }
+
+                                    },
+                                    this
+                                )
+                        },
+                        open :  function () {
+                            $('button:last', $(this).parent()).focus();
+                        }
+                    }
+                );
+            ;
 
             this.data('command-header').bind('click',
                 $.proxy(
@@ -247,6 +404,53 @@
             );
 
             return $block;
+
+
+        },
+
+        addLink : function(narrative, reason, previouslyLinked, idx) {
+            if (! previouslyLinked) {
+                this.options.links.push([narrative, reason]);
+            }
+
+            this.data('link-' + narrative, $('<li></li>')
+                    .append(
+                        $('<button></button>')
+                            .append('Close\n')
+                            .css({width : '19px', height : '18px'})
+                            .button({text : false, icons : {primary : 'ui-icon-closethick'}})
+                            .bind('click',
+                                jQuery.proxy(function (e) {
+                                    this.data('deleteLink', narrative);
+                                    this.$deleteLinkDialog.dialog('open');
+                                }, this)
+                            )
+                        )
+                    .append(
+                        $('<b></b>')
+                            .text(' References: ')
+                        )
+                    .append(
+                        $('<a></a>')
+                            .attr('href', '#')
+                            .text(narrative)
+                            .bind('click',
+                                jQuery.proxy( function(e) {
+                                    //XXX this is hardwired to an assumed function. Refactor this!
+                                    var f = $("#workspaces").data("addTab");
+
+                                    var res = f(narrative);
+                                }, this)
+                            )
+                        )
+                    .append($('<br></br>'))
+                    .append(
+                        $('<i></i>')
+                            .text(reason)
+                        )
+            );
+
+            this.data('cross-links').append(this.data('link-' + narrative));
 
 
         },
@@ -525,6 +729,7 @@ console.log(res);
                 outputTruncate : this.options.outputTruncate,
                 inputType : this.options.inputType,
                 outputType : this.options.outputType,
+                links : this.options.links,
                 lastRun : this.data('state') == 'error'
                     ? undefined
                     : this.data('command-lastrun').attr('datetime')
