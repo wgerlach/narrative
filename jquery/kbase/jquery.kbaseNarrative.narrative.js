@@ -286,6 +286,10 @@ console.log("ADDS WITH OPTIONS"); console.log(options);
                 $block[options.blockType]('prompt');
             }
 
+            if ($block[options.blockType]('data', 'autorun')) {
+                $block[options.blockType]('run');
+            }
+
             return $block;
         },
 

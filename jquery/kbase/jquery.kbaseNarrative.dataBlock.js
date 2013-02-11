@@ -35,6 +35,7 @@ console.log("NARRATIVE IS"); console.log(this.narrative);
                 $.proxy(
                     function (res) {
                         if (res != undefined) {
+                            this.data('output', res);
                             this.data('command-interface').slidingPanel({
                                 content : res,
                                 truncate : this.options.outputTruncate,
@@ -50,6 +51,10 @@ console.log("NARRATIVE IS"); console.log(this.narrative);
 
             return this;
 
+        },
+
+        output : function () {
+            return this.data('output');
         },
 
         ui : function(file) {

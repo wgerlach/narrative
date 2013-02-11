@@ -143,7 +143,7 @@
                 )
                 .append(
                     $('<div></div>')
-                        .attr('style', 'margin-top : 1px;margin-bottom : 1px; width : 100%; border : 1px solid blue')
+                        .attr('style', 'margin-top : 1px;margin-bottom : 1px; width : 100%')
                         .append(
                             $('<ul></ul>')
                                 .attr('id', 'cross-links')
@@ -676,6 +676,7 @@ console.log(res);
 
         appendOutputUI : function(output) {
             this.appendInputUI();
+            this.data('output', output);
             if (output != undefined) {
                 this.data('command-interface').slidingPanel({
                     content : output,
@@ -683,6 +684,10 @@ console.log(res);
                     autoOpen : true
                 });
             }
+        },
+
+        output : function() {
+            return this.data('output');
         },
 
         appendRunningUI : function() {
