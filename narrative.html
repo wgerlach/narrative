@@ -34,6 +34,7 @@
         <script src = './js/geometry/size.js'></script>
         <script src = './js/RGBColor.js'></script>
         <script src = './jquery/kbase/jquery.kbaseNarrative.animatedLineGraphBlock.js'></script>
+        <script src = './jquery/kbase/jquery.kbaseNarrative.heatmapBlock.js'></script>
 
         <script src = './jquery/kbase/jquery.kbaseIris.commands.js'></script>
         <script src = './jquery/kbase/jquery.kbaseNarrativeViz.commands.js'></script>
@@ -51,8 +52,6 @@
             <!--
 
                 function newWorkspaceCallback(files) {
-                console.log("FILES ARE HERE!");
-                    console.log(files);
                     try {
                         $.each(
                             files[0],
@@ -163,7 +162,7 @@
                         var prompt = getParameterByName('version') == 'B'
                             ? 0
                             : 1;
-console.log("ADDS " + label + ' of ' + blockType);
+                        //console.log("ADDS " + label + ' of ' + blockType);
                         $( $selectedPanel.children()[0] ).narrative('addBlock', { name : label, prompt : prompt, blockType: blockType, blockOptions : blockOptions });
                         $( $selectedPanel.children()[0] ).narrative('reposition');
                         //$(window).trigger('resize');

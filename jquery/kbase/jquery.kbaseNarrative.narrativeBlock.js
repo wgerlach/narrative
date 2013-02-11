@@ -259,7 +259,6 @@
                                     function() {
 
                                         var values = this.data('linkDialogContent').formBuilder('getFormValues');
-                                        console.log(values);
 
                                         this.addLink(values[0][1], values[1][1]);
 
@@ -289,7 +288,6 @@
                     this.narrative.listNarratives(
                         jQuery.proxy(
                             function (filelist) {
-                            console.log(filelist);
                                 var dirs = filelist[0];
                                 var files = filelist[1];
 
@@ -300,7 +298,6 @@
                                 jQuery.each(
                                     dirs,
                                     function (idx, val) {
-                                        console.log(val);
                                         elements.push(val['name']);
                                     }
                                 );
@@ -354,7 +351,7 @@
                             Delete :
                                 $.proxy(
                                     function() {
-console.log(this.options.links);
+
                                         this.options.links.splice(this.data('deleteLinkIndex'), 1);
 
                                         var narrative = this.data('deleteLink');
@@ -562,7 +559,7 @@ console.log(this.options.links);
                 if (this.options.id) {
                     command += ' > ' + this.options.id + ' ';
                 }
-                console.log("RUNS COMMAND " + command);
+                //console.log("RUNS COMMAND " + command);
                 this.narrative.client.run_pipeline_async(
                     this.narrative.user_id,
                     command,
@@ -571,7 +568,7 @@ console.log(this.options.links);
                     this.narrative.wd,
                     $.proxy(
                         function (res) {
-console.log(res);
+                            //console.log(res);
                             if (res[1][0] != undefined && ! res[1][0].match(/ 0$/)) {
                                 var errorMsg = res[1].join("");
                                 this.appendOutputUI(errorMsg);

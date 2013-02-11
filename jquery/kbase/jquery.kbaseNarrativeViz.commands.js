@@ -58,6 +58,38 @@
                                         )
                                     )
                                 )
+                        .append(
+                            $('<ul></ul>')
+                                .append(
+                                    $('<li></li>')
+                                        .append($('<a></a>')
+                                            .attr('href', '#')
+                                            .attr('title', 'Heat Map')
+                                            .css('display', 'list-item')
+                                            .data('blockType', 'heatmapBlock')
+                                            .text('Heat Map')
+                                            .bind(
+                                                'click',
+                                                this.options.link
+                                            )
+                                        )
+                                        .draggable(
+                                            {
+                                                distance : 20,
+                                                cursor   : 'pointer',
+                                                opacity  : 0.7,
+                                                helper   : 'clone',
+                                                connectToSortable: this.options.connectToSortable,
+                                                revert : 'invalid',
+                                                disabled : this.options.connectToSortable == undefined,
+                                                cursorAt : {
+                                                    left : 5,
+                                                    top  : 5
+                                                }
+                                            }
+                                        )
+                                    )
+                                )
                     )
             ;
 

@@ -15,7 +15,7 @@
         },
 
         makeNarrativesDirCallback : function (results) {
-console.log("WD " + this.wd);
+
             this.client.list_files_async(
                 this.user_id,
                 '/',
@@ -141,7 +141,7 @@ console.log("WD " + this.wd);
             if (this.options.output) {
                 this.appendOutputUI(this.options.output);
             }
-console.log(this.user_id);
+
             this.client.make_directory_async(
                 this.user_id,
                 '/',
@@ -182,20 +182,19 @@ console.log(this.user_id);
                 function (idx, val) {
                     var blockType = $(val).data('blockType');
                     if ($(val)[blockType]) {
-                    console.log("BLOCK DEF" + blockType);
                         output.elements.push($(val)[blockType]('blockDefinition'));
                     }
                 }
             );
 
             var json = JSON.stringify(output);
-console.log("SAVES " + json);
+
             this.client.put_file_async(
                 this.user_id,
                 'narrative.data',
                 json,
                 this.wd,
-                function (e) {console.log("SAVED");},
+                function (e) {},
                 jQuery.proxy(this.errorCallback, this)
             );
         },
@@ -245,18 +244,18 @@ console.log("SAVES " + json);
             }
 
             options.narrative = this;
-console.log("OPTS");console.log(options);
+
             var metaFunc = MetaToolInfo(options.name);
 
             if (metaFunc != undefined) {
-            console.log(options);
-            console.log(metaFunc);
+                //console.log(options);
+                //console.log(metaFunc);
                 var meta = metaFunc(options.name);
                 for (key in meta) {
                     options[key] = meta[key];
                 }
             }
-console.log("ADDS WITH OPTIONS"); console.log(options);
+
             var $block = $('<div></div>')[options.blockType](options);
 
             if ($target) {

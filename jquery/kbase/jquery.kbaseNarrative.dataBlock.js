@@ -17,14 +17,11 @@
 
             this.narrative = this.options.narrative;
 
-console.log("NARRATIVE IS"); console.log(this.narrative);
-
             this.element.append(this.ui(this.options.file));
             $(this.element).data('blockType', 'dataBlock');
 
             //$(window).trigger('resize');
             if (this.narrative) {
-            console.log("NARRATIVE REPOS");
                 this.narrative.reposition();
             }
 
@@ -98,7 +95,7 @@ console.log("NARRATIVE IS"); console.log(this.narrative);
                         .append(file)
                 )
             ;
-console.log("FILE IS " + file);
+
             this._rewireIds($block, this);
 
             //odd. Apparently I can't do this when the element isn't within the document. Moved down into re-position to set once
@@ -181,7 +178,7 @@ console.log("FILE IS " + file);
         },
 
         reposition : function() {
-console.log("REPOSITION");
+
             this.data('command-name').position({of : this.data('command-header'), my : 'left', at : 'left+5 center'});
 
             this.data('command-controls').position({of : this.data('command-header'), my : 'right', at : 'right-5 center'});

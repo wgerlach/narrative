@@ -32,7 +32,7 @@
         },
 
         blockDefinition : function() {
-        console.log("BLOCK DEF HERE FOR " + this.clientClass);
+
             var def = this._super();
 
             def.clientClass = this.clientClass;
@@ -76,20 +76,20 @@
                     */
                 }
 
-                console.log("RUNS COMMAND " + command);
-                console.log(this.client);
+                //console.log("RUNS COMMAND " + command);
+                //console.log(this.client);
 
                 var args = this.data('command-interface').formBuilder('getFormValues');
-                console.log("ARGS");console.log(args);
+                //console.log("ARGS");console.log(args);
 
                 //tack on the success and failure callbacks.
                 args.push(
                     $.proxy(
                         function (res) {
-                        console.log("GOT RESULTS");
-                        console.log(res);
+                        //console.log("GOT RESULTS");
+                        //console.log(res);
                             this.appendOutputUI(JSON.stringify(res, null, 4));
-console.log(this.options.id);console.log(this.narrative.user_id);
+                            //console.log(this.options.id);console.log(this.narrative.user_id);
                             this.narrative.client.put_file_async(
                                 this.narrative.user_id,
                                 this.options.id,
@@ -104,8 +104,8 @@ console.log(this.options.id);console.log(this.narrative.user_id);
                     ),
                     $.proxy(
                         function(res) {
-                        console.log("GOT ERROR");
-                        console.log(res);
+                        //console.log("GOT ERROR");
+                        //console.log(res);
                             this.appendOutputUI(JSON.stringify(res));
                             this.enterErrorState();
                             this.narrative.save();
