@@ -23,9 +23,11 @@
         <script src = './jquery/kbase/jquery.kbase.formBuilder.js'></script>
         <script src = './jquery/kbase/jquery.kbaseNarrative.narrativeBlock.js'></script>
         <script src = './jquery/kbase/jquery.kbaseNarrative.javascriptBlock.js'></script>
+        <script src = './jquery/kbase/jquery.kbaseNarrative.dataBlock.js'></script>
         <script src = './jquery/kbase/jquery.kbaseNarrative.comment.js'></script>
         <script src = './jquery/kbase/jquery.kbaseNarrative.narrative.js'></script>
         <script src = './jquery/kbase/jquery.kbaseNarrative.commandcontext.js'></script>
+        <script src = './jquery/kbase/jquery.kbaseNarrative.dataUploader.js'></script>
 
         <script src = './jquery/kbase/jquery.kbaseIris.commands.js'></script>
 
@@ -90,25 +92,41 @@
 		                    login_callback : function(args) {
 		                        if (this.session('user_id')) {
                                     client.start_session_async(this.session('user_id'), function (res) {}, function (e){ console.log(e);} );
+                                    $('#uploader').dataUploader('listUploadedFiles');
                                 }
 		                    }
 		                });
 
                     var client = new InvocationService('http://140.221.84.183:7049', undefined,
-                                jQuery.proxy(function() {
-                                    var cookie_obj = window.$ld.login('get_kbase_cookie');
-                                    if (cookie_obj)
-                                    {
+                        jQuery.proxy(
+                            function() {
+                                var cookie_obj = window.$ld.login('get_kbase_cookie');
+                                if (cookie_obj) {
                                     var token = cookie_obj['token'];
-                                    console.log("returning token from auth_cb " + token);
                                     return token;
-                                    }
-                                    else
-                                    {
-                                    console.log("returning undef from auth_cb ");
+                                }
+                                else {
                                     return undefined;
-                                    }
-                                }, this));
+                                }
+                            },
+                            this
+                        )
+                    );
+
+                    $('#uploader').dataUploader(
+                        {
+                            client : client,
+                            action : function (filename) {
+                                var $selectedPanel = $('#workspaces').data('selectedPanel');
+                                $( $selectedPanel.children()[0] ).narrative(
+                                    'addDataBlock',
+                                        {
+                                            file : filename
+                                        }
+                                );
+                            }
+                        }
+                    );
 
                     $('#command-list').commands(
                         {
@@ -304,7 +322,7 @@ console.log("ADDS " + label + ' of ' + blockType);
                         buttons: {
                             Add: function() {
                                 var f = $('#workspaces').data("addNarrativeCommand");
-                                var res = f($("#command_title").val());
+                                var res = f($("#command_title").val(), 'narrativeBlock');
                                 if (res) {
                                     $( this ).dialog( "close" );
                                 }
@@ -328,7 +346,7 @@ console.log("ADDS " + label + ' of ' + blockType);
                     // addTab form: calls addTab function on submit and closes the dialog
                     $( "form", $add_custom_command_dialog ).submit(function() {
                         var f = $("#workspaces").data("addNarrativeCommand");
-                        var res = f($("#command_title").val());
+                        var res = f($("#command_title").val(), 'narrativeBlock');
                         if (res) {
                             $add_custom_command_dialog.dialog( "close" );
                         }
@@ -437,6 +455,10 @@ console.log("ADDS " + label + ' of ' + blockType);
 
                         </div>
                     </div>
+
+
+                    <div id = 'uploader' style = 'width : 252px'></div>
+
 
                     <div class = 'ui-widget' style = 'height : 550px'>
                         <h3 class="ui-widget-header ui-corner-bottom" style = 'padding : 5px; margin-top : 0px; text-align : center; border-top : 0px '>

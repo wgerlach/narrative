@@ -266,7 +266,7 @@ function InvocationService(url, auth, auth_cb) {
 	{
 	    token = _auth_cb();
 	}
-console.log("URL" + _url);console.log(params);
+//console.log("URL" + _url);console.log(params);
         var x = jQuery.ajax({
 		"async": true,
 		dataType: "text",
@@ -279,7 +279,7 @@ console.log("URL" + _url);console.log(params);
 		},
 		success: function (data, status, xhr)
 		{
-console.log(callback);console.log(data);
+//console.log(callback);console.log(data);
 		    resp = JSON.parse(data);
 		    var result = resp["result"];
 		    if (num_rets == 1)
@@ -297,8 +297,8 @@ console.log(callback);console.log(data);
 		    if (xhr.responseText)
 		    {
 			resp = JSON.parse(xhr.responseText);
-console.log(error_callback);console.log(xhr.responseText);
-			console.log(resp);
+//console.log(error_callback);console.log(xhr.responseText);
+			//console.log(resp);
 			if (error_callback)
 			{
 			    error_callback(resp.error);

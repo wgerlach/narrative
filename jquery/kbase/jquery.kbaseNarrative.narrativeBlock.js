@@ -345,6 +345,10 @@
                             command += ' < ' + $before.narrativeBlock('id') + ' ';
                             break;
                         }
+                        else if ($before.data('blockType') == 'dataBlock') {
+                            command += ' < ' + $before.dataBlock('filePath') + ' ';
+                            break;
+                        }
                         else {
                             $before = $before.prev();
                         }

@@ -96,7 +96,11 @@
                                             .append(
                                                 $('<a></a>')
                                                     .attr('href', '#')
+                                                    .attr('title', val['name'])
                                                     .text(val['name'])
+                                                    .css('width', '191px')
+                                                    .css('display', 'block')
+                                                    .css('float', 'left')
                                                     .bind(
                                                         'click',
                                                         jQuery.proxy(
@@ -109,7 +113,9 @@
                                                 )
                                             .append(
                                                 $('<span></span>')
-                                                    .css('float', 'right')
+                                                    //.css('float', 'right')
+                                                    //.css('width', '250px')
+                                                    //.css("text-align", 'right')
                                                     .append(
                                                         $('<button></button>')
                                                             .attr('id', 'inspectbutton')
@@ -198,19 +204,26 @@
 
             var $block = $('<div></div>')
                 .attr('id', 'block')
-                .attr('class', 'ui-widget ui-widget-content ui-corner-all')
-                .attr('style', 'padding : 5px; overflow : hidden; margin-bottom : 5px')
+                .attr('class', 'ui-widget ui-widget-content')
+                .css('border-top', '0px')
+                .attr('style', 'overflow : hidden; padding-bottom : 2px')
                 .append(
                     $('<div></div>')
-                        .attr('id', 'command-header')
-                        .attr('class', 'ui-widget-header ui-corner-all')
-                        .attr('style', 'padding : 5px; margin-top : 0px; height : 18px')
                         .append(
-                            $('<h3></h3>')
-                                .attr('style', 'position : absolute;')
-                                .attr('id', 'command-name')
-                                .text('Upload data')
-                        )
+                            $('<div></div>')
+                                .addClass("ui-widget-header")
+                                .css('border-top', '0px')
+                                .css('height', '30px')
+                                .css('border', '0px')
+                                .append(
+                                    $('<h3></h3>')
+                                        .attr('id', 'widget-title')
+                                        .text('Uploaded data')
+                                        .css('padding', '5px')
+                                        .css('margin-top', '0px')
+                                        .css('text-align', 'center')
+                                )
+                            )
 
                     )
                 .append(
@@ -226,7 +239,7 @@
                             $('<input></input>')
                                 .attr('type', 'file')
                                 .attr('id', 'fileInput')
-                                .css('visibility', 'hidden')
+                                .css('display', 'none')
                                 .button()
                         )
                         .append(
@@ -241,76 +254,6 @@
                         .attr('id', 'panel')
                         .css('display', 'none')
                     )
-
-/*                .append(
-                    $('<div></div>')
-                        .attr('id', 'command-header')
-                        .attr('class', 'ui-widget-header ui-corner-all')
-                        .attr('style', 'padding : 5px; margin-top : 0px; height : 18px')
-                        .append(
-                            $('<h3></h3>')
-                                .attr('style', 'position : absolute;')
-                                .attr('id', 'command-name')
-                        )
-                        .append(
-                            $('<div></div>')
-                                .attr('style', 'position : absolute; height : 18px; text-align : right; white-space : nowrap')
-                                .attr('id', 'command-controls')
-                                /*.append(
-                                    $('<button></button>')
-                                        .attr('id', 'noticebutton')
-                                        .append('Drop\n')
-                                        .css({width : '19px', height : '18px'})
-                                        .button({text : false, icons : {primary : 'ui-icon-notice'}})
-                                )
-                                .append(
-                                    $('<button></button>')
-                                        .attr('id', 'stopbutton')
-                                        .append('Stop\n')
-                                        .css({width : '19px', height : '18px'})
-                                        .button({text : false, icons : {primary : 'ui-icon-pause'}})
-                                )* /
-                                .append(
-                                    $('<button></button>')
-                                        .attr('id', 'linkbutton')
-                                        .append('Link to narrative\n')
-                                        .css({width : '19px', height : '18px'})
-                                        .button({text : false, icons : {primary : 'ui-icon-link'}})
-                                )
-                                .append(
-                                    $('<button></button>')
-                                        .attr('id', 'gobutton')
-                                        .append('Go\n')
-                                        .css({width : '19px', height : '18px'})
-                                        .button({text : false, icons : {primary : 'ui-icon-play'}})
-                                )
-                                .append(
-                                    $('<button></button>')
-                                        .attr('id', 'closebutton')
-                                        .append('Close\n')
-                                        .css({width : '19px', height : '18px'})
-                                        .button({text : false, icons : {primary : 'ui-icon-closethick'}})
-                                )
-                        )
-                        .append(
-                            $('<time></time>')
-                                .attr('style', 'text-align : right; font-size : 25%; position : absolute')
-                                .attr('id', 'command-lastrun')
-                                .attr('datetime', this.options.lastRun)
-                                .css('width', '159px')  //hardwired cuz this is crazy
-                                .css('height', '11px')  //hardwired cuz this is crazy
-                        )
-                )
-                .append(
-                    $('<div></div>')
-                        .attr('style', 'margin-top : 5px;min-height : 150px; float : left; width : 100%;')
-                        .attr('id', 'command-interface')
-                )
-                .append($('<div></div>')
-                    .attr('style', 'font-size : 50%; text-align : right; color : gray; clear : both')
-                    .attr('id', 'output-type')
-                    .append(this.options.outputType.join(' '))
-                )*/
             ;
 
             this._rewireIds($block, this);
@@ -412,7 +355,7 @@
 
         reposition : function() {
 
-            this.data('command-name').position({of : this.data('command-header'), my : 'center', at : 'center center'});
+            this.data('widget-title').position({of : this.data('command-header'), my : 'center', at : 'center center'});
 
         }
 

@@ -54,6 +54,14 @@ console.log("WD " + this.wd);
                                             }
                                         );
                                     }
+                                    else if (val.blockType == 'dataBlock') {
+                                        this.addDataBlock(
+                                            {
+                                                file   : val.file,
+                                                id      : val.id,
+                                            }
+                                        );
+                                    }
                                     else {
 
                                         var $block = this.addBlock(val);
@@ -292,6 +300,34 @@ console.log("ADDS WITH OPTIONS"); console.log(options);
             }
 
             return $comment;
+        },
+
+        addDataBlock : function(options) {
+
+            if (options == undefined) {
+                options = {};
+            }
+
+            if (options.id == undefined) {
+                options.id = this.generateBlockID();
+            }
+
+            options.narrative = this;
+
+            var $dataBlock = $('<div></div>').dataBlock(options);
+
+            if (this.data('activeBlock')) {
+                this.data('activeBlock').element.after($dataBlock);
+            }
+            else {
+                this.data('workspace').append($dataBlock);
+            }
+
+            if (! options.noSave) {
+                this.save();
+            }
+
+            return $dataBlock;
         },
 
         activeBlock : function () {
