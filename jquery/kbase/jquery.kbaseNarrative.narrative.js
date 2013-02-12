@@ -284,9 +284,9 @@
             if (prompt) {
                 $block[options.blockType]('prompt');
             }
-
-            if ($block[options.blockType]('data', 'autorun')) {
-                $block[options.blockType]('run');
+console.log("AUTORUN : "); console.log($block.data('autorun'));
+            if ($block.data('autorun')) {
+                $block.run();
             }
 
             return $block;

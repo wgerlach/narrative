@@ -196,6 +196,8 @@
                                         if (this.narrative != undefined) {
                                             this.narrative.save();
                                             this.narrative.reposition();
+                                            // XXX temprary hack. Fix me!
+                                            $('#commandcontext').commandcontext('refresh');
                                         }
 
                                     },
@@ -468,37 +470,44 @@
                             Cancel :
                                 $.proxy(
                                     function () {
+                                        console.log(this);
                                         this.data('promptDialog').dialog('close');
-                                        this.data('block').parent().remove();
-                                        this.narrative.reposition();
                                     },
                                     this
                                 ),
                             Add :
                                 $.proxy(
                                     function() {
+                                        this.data('promptDialog')._addedCommand = 1;
 
                                         this.data('output-type').before(this.data('command-interface'));
                                         this.data('promptDialog').dialog('close');
-                                        this.narrative.reposition();
-
                                     },
                                     this
                                 ),
                             'Add and Run' :
                                 $.proxy(
                                     function () {
+                                        this.data('promptDialog')._addedCommand = 1;
                                         this.data('output-type').before(this.data('command-interface'));
                                         this.data('promptDialog').dialog('close');
                                         this.run();
-                                        this.narrative.reposition();
                                     },
                                     this
                                 ),
                         },
                         open :  function () {
+                            this._addedCommand = 0;
                             $('button:last', $(this).parent()).focus();
                         },
+                        close : $.proxy( function() {
+                            if (! this.data('promptDialog')._addedCommand) {
+                                this.data('block').parent().remove();
+                                this.data('promptDialog')._addedCommand = 0;
+                            }
+                            this.narrative.reposition();
+                        }, this)
+
                         /*close :
                             $.proxy(
                                 function () {

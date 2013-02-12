@@ -24,6 +24,10 @@
             }
 
             if (key != undefined) {
+                if (key == 'autorun') {
+                    console.log("KEYED");
+                    console.log(this.options._storage[key]);
+                }
                 return this.options._storage[key];
             }
             else {
