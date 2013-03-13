@@ -200,7 +200,7 @@ function InvocationService(url, auth, auth_cb) {
                     'version': "1.1",
                     'id': String(Math.random()).slice(2),
         };
-
+        
         var body = JSON.stringify(rpc);
         var resp_txt;
         var code;
@@ -233,7 +233,7 @@ function InvocationService(url, auth, auth_cb) {
         if (resp_txt)
         {
             var resp = JSON.parse(resp_txt);
-
+            
             if (code >= 500)
             {
                 throw resp.error;
@@ -256,17 +256,17 @@ function InvocationService(url, auth, auth_cb) {
                     'version': "1.1",
                     'id': String(Math.random()).slice(2),
         };
-
+        
         var body = JSON.stringify(rpc);
         var resp_txt;
         var code;
-
+        
 	var token = _auth.token;
 	if (_auth_cb)
 	{
 	    token = _auth_cb();
 	}
-//console.log("URL" + _url);console.log(params);
+
         var x = jQuery.ajax({
 		"async": true,
 		dataType: "text",
@@ -279,7 +279,6 @@ function InvocationService(url, auth, auth_cb) {
 		},
 		success: function (data, status, xhr)
 		{
-//console.log(callback);console.log(data);
 		    resp = JSON.parse(data);
 		    var result = resp["result"];
 		    if (num_rets == 1)
@@ -290,15 +289,13 @@ function InvocationService(url, auth, auth_cb) {
 		    {
 			callback(result);
 		    }
-
+                    
 		},
 		error: function(xhr, textStatus, errorThrown)
 		{
 		    if (xhr.responseText)
 		    {
 			resp = JSON.parse(xhr.responseText);
-//console.log(error_callback);console.log(xhr.responseText);
-			//console.log(resp);
 			if (error_callback)
 			{
 			    error_callback(resp.error);

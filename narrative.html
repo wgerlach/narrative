@@ -3,18 +3,28 @@
     <head>
 
         <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
-        <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.9.0/jquery-ui.min.js"></script>
 
-        <script src = 'http://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.2/jquery.cookie.js'></script>
-        <script src = 'http://cdnjs.cloudflare.com/ajax/libs/jquery-timeago/0.11.4/jquery.timeago.js'></script>
+        <script src = 'http://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.3.1/jquery.cookie.min.js'></script>
 
-        <!-- Add fancyBox -->
-        <link rel="stylesheet" href="./jquery/fancybox/source/jquery.fancybox.css?v=2.1.3" type="text/css" media="screen" />
-        <script type="text/javascript" src="./jquery/fancybox/source/jquery.fancybox.pack.js?v=2.1.3"></script>
+        <script src="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.0/js/bootstrap.min.js"></script>
+        <!--<script src="../../../../Downloads/bootstrap 2/js/bootstrap.js"></script>-->
+        <!--<link href="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.0/css/bootstrap-combined.min.css" rel="stylesheet">-->
+        <link href="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.0/css/bootstrap-combined.no-icons.min.css" rel="stylesheet">
+        <link href="http://netdna.bootstrapcdn.com/font-awesome/3.0.2/css/font-awesome.css" rel="stylesheet">
 
 		<script type="text/javascript" src="./jquery/spinner/jquery.spinner.js"></script>
 
-        <script src = './js/kbase.js'></script>
+        <script src = './jquery/kbase/kbaseWidget.js'></script>
+        <script src = './jquery/kbase/kbaseLogin.js'></script>
+        <script src = './jquery/kbase/kbaseIrisTerminal.js'></script>
+        <script src = './jquery/kbase/kbaseAccordion.js'></script>
+        <script src = './jquery/kbase/kbaseTabs.js'></script>
+        <script src = './jquery/kbase/kbaseNarrativeWorkspace.js'></script>
+        <script src = './jquery/kbase/kbaseIrisCommands.js'></script>
+        <script src = './jquery/kbase/kbaseIrisFileBrowser.js'></script>
+        <script src = './jquery/kbase/kbaseNarrativeDataBrowser.js'></script>
+
+<!--        <script src = './js/kbase.js'></script>
 
         <script src = './jquery/kbase/jquery.kbase.widget.js'></script>
 
@@ -28,24 +38,26 @@
         <script src = './jquery/kbase/jquery.kbaseNarrative.narrative.js'></script>
         <script src = './jquery/kbase/jquery.kbaseNarrative.commandcontext.js'></script>
         <script src = './jquery/kbase/jquery.kbaseNarrative.dataUploader.js'></script>
+-->
 
         <script src = './js/geometry/point.js'></script>
         <script src = './js/geometry/rectangle.js'></script>
         <script src = './js/geometry/size.js'></script>
         <script src = './js/RGBColor.js'></script>
-        <script src = './jquery/kbase/jquery.kbaseNarrative.animatedLineGraphBlock.js'></script>
+<!--        <script src = './jquery/kbase/jquery.kbaseNarrative.animatedLineGraphBlock.js'></script>
         <script src = './jquery/kbase/jquery.kbaseNarrative.heatmapBlock.js'></script>
+-->
 
+<!--
         <script src = './jquery/kbase/jquery.kbaseIris.commands.js'></script>
         <script src = './jquery/kbase/jquery.kbaseNarrativeViz.commands.js'></script>
+-->
 
-        <link type = 'text/css' href = 'http://ajax.googleapis.com/ajax/libs/jqueryui/1.9.0/themes/smoothness/jquery-ui.css' rel = 'stylesheet' />
+<!--        <link type = 'text/css' href = 'http://ajax.googleapis.com/ajax/libs/jqueryui/1.9.0/themes/smoothness/jquery-ui.css' rel = 'stylesheet' /> -->
 
         <script src = './js/MetaTool.js'></script>
 
         <script src="./js/InvocationService.js" type="text/javascript" charset="utf-8"></script>
-
-		<link type="text/css" href="./css/liquid.css" rel="stylesheet" />
 
 		<script type="text/javascript">
 
@@ -83,30 +95,34 @@
 
                 $(function() {
 
-                    $('#commandcontext').commandcontext(
+                    /*$('#commandcontext').commandcontext(
                         {
                             link : function (evt) {
                                 var f = $("#workspaces").data('addNarrativeCommand');
                                 f($(this).text(), $(this).data('blockType'));
                             }
                         }
-                    );
+                    );*/
 
-		            window.$ld = $('#login-box').login(
-		                {
-		                    style : 'slim',
+                    window.$ld = $('#login').kbaseLogin(
+                        {
+                            style : 'text',
 		                    login_callback : function(args) {
 		                        if (this.session('user_id')) {
+		                            var cookie = this.get_kbase_cookie();
+		                            console.log("COOKIE");
+		                            console.log(cookie.token);
                                     client.start_session_async(this.session('user_id'), function (res) {}, function (e){ console.log(e);} );
-                                    $('#uploader').dataUploader('listUploadedFiles');
+                                    //$('#uploader').dataUploader('listUploadedFiles');
                                 }
 		                    }
-		                });
+                        }
+                    )
 
                     var client = new InvocationService('http://140.221.84.183:7049', undefined,
                         jQuery.proxy(
                             function() {
-                                var cookie_obj = window.$ld.login('get_kbase_cookie');
+                                var cookie_obj = window.$ld.kbaseLogin('get_kbase_cookie');
                                 if (cookie_obj) {
                                     var token = cookie_obj['token'];
                                     return token;
@@ -119,7 +135,7 @@
                         )
                     );
 
-                    $('#uploader').dataUploader(
+                    /*$('#uploader').dataUploader(
                         {
                             client : client,
                             action : function (filename) {
@@ -132,13 +148,16 @@
                                 );
                             }
                         }
-                    );
+                    );*/
 
-                    $('#command-list').commands(
+                    $('#command-list').kbaseIrisCommands(
                         {
-                            client : client,
-                            connectToSortable : '.kb-nar-narrative',
+                            client          : client,
+                            //connectToSortable : '.kb-nar-narrative',
+                            englishCommands : true,
+                            overflow        : true,
                             link : function (evt) {
+                                evt.preventDefault();
                                 var f = $("#workspaces").data('addNarrativeCommand');
                                 f(
                                     $(this).attr('title'),
@@ -149,6 +168,46 @@
                         }
                     );
 
+                    var $fb = $('#file-browser').kbaseNarrativeDataBrowser (
+                        {
+                            client : client,
+                            $loginbox : window.$ld,
+                            externalControls : true,
+                            root : '/narrative_data',
+                            //controlButtons : ['viewButton', 'deleteButton', 'uploadButton' ],
+                        }
+                    );
+
+                    var $tabs = $('#tabs').kbaseNarrativeWorkspace(
+                        {
+                            client      : client,
+                            $loginbox : window.$ld,
+                            tabPosition : 'bottom',
+                            canDelete : true,
+                            tabs : [
+                                {
+                                    tab : 'T1',
+                                    content : $('<div></div>').html("I am a tab"),
+                                },
+                                {
+                                    tab : 'T2',
+                                    content : $('<div></div>').html("I am a tab 2"),
+                                },
+                                {
+                                    tab : 'T3',
+                                    content : $('<div></div>').html("I am a tab 3"),
+                                    show : true,
+                                },
+                            ],
+                        }
+                    );
+
+                    $tabs.listNarratives(function (files) {console.log(files)});
+
+//                    $tabs.addTab('T1', $('<div></div>').html("I am a tab"));
+//                    $tabs.addTab('T2', $('<div></div>').html("I am a tab 2"));
+//                    $tabs.addTab('T3', $('<div></div>').html("I am a tab 3"));
+//$tabs.showTab('T2');
 
                     $('#workspaces').data('addNarrativeCommand', function(label, blockType, blockOptions) {
 
@@ -172,7 +231,7 @@
                     });
 
 
-                    $('#workspaces').tabs({
+                    /*$('#workspaces').tabs({
                         tabTemplate: "<li><a href='#{href}'>#{label}</a> <span class='ui-icon ui-icon-close removeTabButton'>Remove Tab</span></li>",
 
                         add: function( event, ui ) {
@@ -365,180 +424,65 @@
 
                     $('#add-custom-command').button();
                     $('#add-comment').button();
-
+*/
                 });
 
 
 
 
 			//-->
-
-
 		</script>
 
-        <link href='http://fonts.googleapis.com/css?family=Oxygen' rel='stylesheet' type='text/css'>
-		<style type="text/css">
-			/*demo page css*/
 
-			body, .ui-widget { font-size: 80%;}
-			body, .ui-widget, .ui-widget input, .ui-widget select, .ui-widget textarea, .ui-widget button { font-family: "Oxygen", sans-serif !important}
-			ul { padding : 2px }
-			li { list-style-type : none; }
-		</style>
+        <title>KBase Narrative</title>
+        <link rel="icon" href="img/KBase_favicon.ico" type="image/x-icon">
+        <link href="css/identity.css" rel="stylesheet">
+        <link href="css/kbase-common.css" rel="stylesheet">
+        <link href="css/narrative.css" rel="stylesheet">
+        <style type="text/css">
+          body {
+            /* padding to make room for the fixed nav bar,
+               modify in css as needed. */
+            padding-top: 60px;
+          }
+        </style>
 
-<style>
-	#workspaces li .ui-icon-close { float: left; margin: 0.4em 0.2em 0 0; cursor: pointer; }
-</style>
+    </head>
 
-<style>
-#portamento_container {
-	float:right;
-	position:relative;
-}
+    <body>
 
-#portamento_container #floating {
-	float:none;
-	position:absolute;
-}
-
-#portamento_container #floating.fixed {
-	position:fixed;
-}
-</style>
-
-</head>
-<body>
-
-<div>
-
-<!--    <div>
-        <img src = 'kbase_logo.png'/ width = '220'>
-        <div style = 'float : right' id = 'login-box'>
-
+        <div class="navbar navbar-fixed-top">
+          <div class="navbar-inner">
+            <a href="http://www.kbase.us/labs/"><img class="logo" src="img/labs_icon.png" width="46"></a>
+            <a class="brand">Narrative</a>
+            <ul class="nav" style="float:right;">
+              <li id = 'login' style = 'padding : 9px 15px 7px 10px'></li>
+            </ul>
+          </div>
         </div>
-    </div>
--->
 
-    <div id="maincontainer">
+        <div class = 'row-fluid'>
+            <div class = 'span3'>
+                <!--<img src = './img/kbase_logo.png'/ width = '220'><br/><br/>-->
+                <div id = 'command-list'></div>
+                <div id = 'process-list'></div>
+                <div id = 'file-browser'></div>
+            </div>
+            <div class = 'span9' style = 'position : relative'>
 
-        <div id="contentwrapper">
-            <div id="contentcolumn">
-                <div class="innertube">
+                <div id = 'tabs'></div>
 
-                    <div class = 'ui-widget'>
-        <div style = 'float : right; clear : both' id = 'login-box'>
-
-        </div><br clear = 'all'/>
-                        <div id="workspaces">
-                            <ul>
-                                <li style = 'float : right'><a href='#add-workspace' id = 'add-tabs-button'><span class = 'ui-icon ui-icon-plus'>&nbsp;</span></a></li>
-                            </ul>
-                            <div class = 'ui-widget' id = 'add-workspace'></div>
-
-                        </div>
-                    </div>
-
-
-                </div>
             </div>
         </div>
 
-        <div id="leftcolumn">
-            <div class="innertube">
-
-                <div id = 'floating'>
-                    <img src = './img/kbase_logo.png'/ width = '220'>
-                    <div class = 'ui-widget'>
-                        <div class = "ui-widget-content ui-corner-top" style = 'width : 250px;'>
-                            <button id = 'add-custom-command' style = 'width : 100%; margin-bottom : 5px;'>Custom narrative command</button>
-                            <button id = 'add-comment' style = 'width : 100%; margin-bottom : 5px'>Add comment</button>
-                        </div>
-                    </div>
-
-                    <div class = 'ui-widget'>
-                        <div style = 'width : 250px;' id = 'commandcontext'>
-
-                        </div>
-                    </div>
+        <br clear = 'all'/>
 
 
-                    <div id = 'uploader' style = 'width : 252px'></div>
+        <div id="pgfooter">Copyright &copy; 2012 DOE <a href = 'http://www.kbase.us/'>KBase</a></div>
+
+    </body>
 
 
-                    <div class = 'ui-widget' style = 'height : 550px'>
-                        <h3 class="ui-widget-header ui-corner-bottom" style = 'padding : 5px; margin-top : 0px; text-align : center; border-top : 0px '>
-                            Command list
-                        </h3>
-
-                        <div style = 'width : 250px' id = 'command-list'>
-
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-        <div id="rightcolumn">
-            <!-- we dropped down to a two column interface -->
-        </div>
-    </div>
-
-    <br clear = 'all'/>
-    <div style = 'width : 100%; height : 2.4em;'>&nbsp;</div>
-
-    <div id="footer">Copyright &copy; 2012 DOE <a href = 'http://www.kbase.us/'>KBase</a></div>
-
-    <div style = 'display : none'>
-
-        <div id="add-workspace-dialog" title="Select narrative">
-            <form id = 'new-workspace-form'>
-                <fieldset class="ui-helper-reset">
-                    <div class="ui-widget" id = 'add-workspace-error' style = 'display : none'>
-                        <div class="ui-state-error ui-corner-all" style="padding: 0 .7em;">
-                            <p><span class="ui-icon ui-icon-alert" style="float: left; margin-right: .3em;"></span>
-                            <strong>Error:</strong> Please name this workspace.</p>
-                        </div>
-                    </div>
-                    <div>
-                        <label for="workspace_title" style = 'width : 90px; float : left; margin-right : 10px; margin-bottom : 5px; clear : left; text-align : right'>New Narrative:</label>
-                        <input type="text" name="workspace_title" id="workspace_title" value="" class="ui-widget-content ui-corner-all" />
-                    </div>
-                    <div>
-                        <label for="narrative_list" style = 'width : 90px; float : left; margin-right : 10px; margin-bottom : 5px; clear : left; text-align : right'>Existing Narrative:</label>
-                        <select name = 'narrative_list' id = 'narrative_list'></select>
-                    </div>
-                </fieldset>
-            </form>
-        </div>
-
-        <div id="add-custom-command-dialog" title="New custom command">
-            <form id = 'new-command-form'>
-                <fieldset class="ui-helper-reset">
-                    <div class="ui-widget" id = 'add-custom-command-error' style = 'display : none'>
-                        <div class="ui-state-error ui-corner-all" style="padding: 0 .7em;">
-                            <p><span class="ui-icon ui-icon-alert" style="float: left; margin-right: .3em;"></span>
-                            <strong>Error:</strong> Please name this custom command.</p>
-                        </div>
-                    </div
-                    <div>
-                        <label for="command_title">Name:</label>
-                        <input type="text" name="command_title" id="command_title" value="" class="ui-widget-content ui-corner-all" />
-                    </div>
-                </fieldset>
-            </form>
-        </div>
-
-
-    </div>
-
-<br clear = all>
-
-		<script type="text/javascript" src="./jquery/portamento/portamento.js"></script>
-		<script>
-			$('#floating').portamento();
-		</script>
-	</body>
 
 </html>
 
