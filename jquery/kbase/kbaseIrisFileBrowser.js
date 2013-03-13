@@ -518,84 +518,33 @@
 
             var that = this; //sigh. The confirm button needs it for now.
 
-            var $deleteModal =
-                $('<div></div>')
-                    .attr('class', 'modal hide fade')
-                    .attr('tabindex', '-1')
-                    .append(
-                        $('<div></div>')
-                            .attr('class', 'modal-header')
-                            .append(
-                                $('<button></button>')
-                                    .attr('type', 'button')
-                                    .attr('class', 'close')
-                                    .attr('data-dismiss', 'modal')
-                                    .attr('aria-hidden', 'true')
-                                    .append('x\n')
-                            )
-                            .append(
-                                $('<h3></h3>')
-                                    .append('Confirm deletion\n')
-                            )
-                    )
-                    .append(
-                        $('<div></div>')
-                            .attr('class', 'modal-body')
-                            .append(
-                                $('<p></p>')
-                                    .append('Really delete \n')
-                                    .append(
-                                        $('<span></span>').css('font-weight', 'bold')
-                                    )
-                                    .append('?')
-                            )
-                    )
-                    .append(
-                        $('<div></div>')
-                            .attr('class', 'modal-footer')
-                            .append(
-                                $('<a></a>')
-                                    .attr('href', '#')
-                                    .attr('class', 'btn')
-                                    .append('Cancel\n')
-                                    .bind('click',
-                                        function(e) {
-                                            $(this).closest('.modal').modal('hide');
-                                        }
-                                    )
-                            )
-                            .append(
-                                $('<a></a>')
-                                    .attr('href', '#')
-                                    .attr('class', 'btn btn-primary')
-                                    .append('Delete\n')
-                                    .bind('click',
-                                        function(e) {
-                                            $(this).closest('.modal').modal('hide');
-                                            that.client[deleteMethod](
-                                                that.sessionId,
-                                                '/',
-                                                file,
-                                                function (res) { that.refreshDirectory(active_dir) },
-                                                function() {}
-                                                );
-                                        }
-                                    )
-                            )
-                    )
-            ;
+            var promptFile = file.replace(this.options.root, '');
 
-            $deleteModal.unbind('keypress');
-            $deleteModal.keypress(function(e) {
-                if (e.keyCode == 13) {
-                    $('a:last', $deleteModal).trigger("click");
-                    e.stopPropagation();
+            var $deleteModal = $('<div></div>').kbasePrompt(
+                {
+                    title : 'Confirm deletion',
+                    body : 'Really delete <strong>' + promptFile + '</strong>?',
+                    controls : [
+                        'cancelButton',
+                        {
+                            name : 'Delete',
+                            primary : 1,
+                            callback : function(e) {
+                                $(this).closest('.modal').modal('hide');
+                                that.client[deleteMethod](
+                                    that.sessionId,
+                                    '/',
+                                    file,
+                                    function (res) { that.refreshDirectory(active_dir) },
+                                    function() {}
+                                    );
+                            }
+                        }
+                    ]
                 }
-            });
+            );
 
-            $deleteModal.find('span').text(file);
-
-            $deleteModal.modal({'keyboard' : true});
+            $deleteModal.openPrompt();
 
         },
 

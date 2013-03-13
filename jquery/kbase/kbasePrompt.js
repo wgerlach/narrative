@@ -31,7 +31,6 @@
             return {
                 name: 'Cancel',
                 callback : function (e, $prompt) {
-                    console.log(this);
                     $prompt.closePrompt();
                 }
             }
@@ -40,7 +39,6 @@
             return {
                 name: 'Okay',
                 callback : function (e, $prompt) {
-                    console.log(this);
                     $prompt.closePrompt();
                 }
             }
@@ -132,10 +130,15 @@
                     if (typeof val == 'string') {
                         val = $prompt[val]();
                     }
-                    $dialogModal.data('controls').append(
+                    var btnClass = 'btn';
+                    if (val.primary) {
+                        btnClass = btnClass + ' btn-primary';
+                    }
+
+                    var $button =
                         $('<a></a>')
                             .attr('href', '#')
-                            .attr('class', 'btn')
+                            .attr('class', btnClass)
                             .append(val.name)
                             .bind('click',
                                 function(e) {
@@ -144,9 +147,18 @@
                                     val.callback.call(this, e, $prompt);
                                 }
                             )
-                    )
+                    ;
+
+                    if (val.id) {
+                        $button.attr('id', val.id);
+                    }
+
+                    $dialogModal.data('controls').append($button);
                 }
             )
+
+            this._rewireIds($dialogModal, $dialogModal);
+
 
             this.data('dialogModal', $dialogModal);
 

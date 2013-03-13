@@ -15,6 +15,7 @@
 		<script type="text/javascript" src="./jquery/spinner/jquery.spinner.js"></script>
 
         <script src = './jquery/kbase/kbaseWidget.js'></script>
+        <script src = './jquery/kbase/kbasePrompt.js'></script>
         <script src = './jquery/kbase/kbaseLogin.js'></script>
         <script src = './jquery/kbase/kbaseIrisTerminal.js'></script>
         <script src = './jquery/kbase/kbaseAccordion.js'></script>
@@ -120,19 +121,18 @@
                     )
 
                     var client = new InvocationService('http://140.221.84.183:7049', undefined,
-                        jQuery.proxy(
-                            function() {
-                                var cookie_obj = window.$ld.kbaseLogin('get_kbase_cookie');
-                                if (cookie_obj) {
-                                    var token = cookie_obj['token'];
-                                    return token;
-                                }
-                                else {
-                                    return undefined;
-                                }
-                            },
-                            this
-                        )
+                        function() {
+                        console.log("GLOBAL CHECK HERE!");
+                        console.log(window.$ld);
+                            var cookie_obj = window.$ld.get_kbase_cookie();
+                            if (cookie_obj) {
+                                var token = cookie_obj['token'];
+                                return token;
+                            }
+                            else {
+                                return undefined;
+                            }
+                        }
                     );
 
                     /*$('#uploader').dataUploader(
