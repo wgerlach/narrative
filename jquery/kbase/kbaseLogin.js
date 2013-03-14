@@ -755,18 +755,6 @@
                                                             .attr('name', 'password')
                                                             .attr('id', 'password')
                                                             .attr('size', '20')
-                                                            .keypress(
-                                                                $.proxy(
-                                                                    function(e) {
-                                                                        if (e.keyCode == 13) {
-                                                                            this.data('loginDialog').dialogModal().data('loginbutton').trigger("click");
-                                                                            e.stopPropagation();
-                                                                            e.preventDefault();
-                                                                        }
-                                                                    },
-                                                                    this
-                                                                )
-                                                            )
                                                     )
                                             )
                                     )
@@ -815,19 +803,6 @@
                     $(this).data("error").hide();
                     $(this).data("pending").hide();
                 }
-            );
-
-            $ld.dialogModal().on('shown',
-                $.proxy(
-                    function () {
-                        var $ld = this.data('loginDialog');
-                        $ld.dialogModal().data("user_id").focus();
-                        if ($ld.dialogModal().data('user_id').val()) {
-                            $ld.dialogModal().data('password').focus();
-                        }
-                    },
-                    this
-                )
             );
 
             return $ld;

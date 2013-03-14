@@ -139,7 +139,7 @@
                                 //oh, but we can't just say $(this).tab('activate',...) because bootstrap is specifically
                                 //wired up now to pass along any arguments to methods invoked in this manner.
                                 //
-                                //Because this technology -sucks-.
+                                //Because bootstrap -sucks-.
                                 $.fn.tab.Constructor.prototype.activate.call(
                                     $(this),
                                     $(this).parent('li'),
@@ -173,17 +173,11 @@
                                 e.preventDefault();
                                 e.stopPropagation();
 
-                                var $deleteModal = $('<div></div>').kbasePrompt(
+                                var $deleteModal = $('<div></div>').kbaseDeletePrompt(
                                     {
-                                        title : 'Confirm deletion',
-                                        body : 'Really delete <strong>' + tab.tab + '</strong>?',
-                                        controls : [
-                                            'cancelButton',
-                                            {
-                                                name : 'Delete',
-                                                primary : 1,
-                                                callback : function(e) {
-                                                    $deleteModal.closePrompt();
+                                        name : tab.tab,
+                                        callback : function(e, $prompt) {
+                                                    $prompt.closePrompt();
                                                     if ($nav.hasClass('active')) {
                                                         if ($nav.next('li').length) {
                                                             $nav.next().find('a').trigger('click');
@@ -195,8 +189,6 @@
                                                     $tab.remove();
                                                     $nav.remove();
                                                 }
-                                            }
-                                        ]
                                     }
                                 );
 

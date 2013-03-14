@@ -209,8 +209,56 @@
 
             this._rewireIds($dialogModal, $dialogModal);
 
-
             this.data('dialogModal', $dialogModal);
+
+            var $firstField = undefined;
+            var selection = false;
+
+            $dialogModal.on('shown',
+                $.proxy(
+                    function () {
+                        $.each(
+                            $dialogModal.find('input[type=text],input[type=password],textarea'),
+                            function (idx, val) {
+                                if ($firstField == undefined) {
+                                    $firstField = $(val);
+                                }
+                                console.log('found ');console.log( val);console.log($(val).val());console.log($(val).text().length);
+                                if ($(val).is("input") && $(val).val() == undefined) {
+                                console.log('sel input');
+                                    $(val).focus();
+                                    selection = true;
+                                    return;
+                                }
+                                else if ($(val).is("textarea") && $(val).text().length == 0) {
+                                console.log('sel txtarea');
+                                    $(val).focus();
+                                    selection = true;
+                                    return;
+                                }
+                            }
+                        );
+
+                        if (! selection && $firstField != undefined) {
+                            $firstField.focus();
+                        }
+                    },
+                    this
+                )
+            );
+
+            /*$dialogModal.find('input[type=text],input[type=password]').last().keypress(
+                $.proxy(
+                    function(e) {
+                        if (e.keyCode == 13) {
+                            $dialogModal.find('a:last').trigger('click');
+                            e.stopPropagation();
+                            e.preventDefault();
+                        }
+                    },
+                    this
+                )
+            );*/
 
             return $dialogModal;
 

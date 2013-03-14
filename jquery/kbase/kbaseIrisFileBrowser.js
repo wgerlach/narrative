@@ -358,6 +358,8 @@
             var parentDir = this.data('activeDirectory') || this.options.root;
             var that = this;
 
+            var displayDir = parentDir.replace(this.options.root, '/');
+
             var $addDirectoryModal = $('<div></div>').kbasePrompt(
                 {
                     title : 'Create directory',
@@ -366,7 +368,7 @@
                             .append(
                                 $('<span></span>')
                                     .css('font-weight', 'bold')
-                                    .text(parentDir)
+                                    .text(displayDir)
                             )
                             .append(' ')
                             .append(
@@ -374,15 +376,6 @@
                                     .attr('type', 'text')
                                     .attr('name', 'dir_name')
                                     .attr('size', '20')
-                                    .keypress(
-                                        function(e) {
-                                            if (e.keyCode == 13) {
-                                                e.preventDefault();
-                                                e.stopPropagation();
-                                                $(this).closest('.modal').find('a:last').trigger('click');
-                                            }
-                                        }
-                                    )
                             )
                     ,
                     controls : [
@@ -402,12 +395,6 @@
                             }
                         }
                     ]
-                }
-            );
-
-            $addDirectoryModal.dialogModal().on('shown',
-                function () {
-                    $addDirectoryModal.dialogModal().find('input').focus();
                 }
             );
 
@@ -482,27 +469,19 @@
 
             var promptFile = file.replace(this.options.root, '');
 
-            var $deleteModal = $('<div></div>').kbasePrompt(
+            var $deleteModal = $('<div></div>').kbaseDeletePrompt(
                 {
-                    title : 'Confirm deletion',
-                    body : 'Really delete <strong>' + promptFile + '</strong>?',
-                    controls : [
-                        'cancelButton',
-                        {
-                            name : 'Delete',
-                            primary : 1,
-                            callback : function(e, $prompt) {
-                                $prompt.closePrompt();
-                                that.client[deleteMethod](
-                                    that.sessionId,
-                                    '/',
-                                    file,
-                                    function (res) { that.refreshDirectory(active_dir) },
-                                    function() {}
-                                    );
-                            }
-                        }
-                    ]
+                    name : promptFile,
+                    callback : function(e, $prompt) {
+                        $prompt.closePrompt();
+                        that.client[deleteMethod](
+                            that.sessionId,
+                            '/',
+                            file,
+                            function (res) { that.refreshDirectory(active_dir) },
+                            function() {}
+                            );
+                    }
                 }
             );
 

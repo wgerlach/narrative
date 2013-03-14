@@ -16,8 +16,8 @@
 
         <script src = './jquery/kbase/kbaseWidget.js'></script>
         <script src = './jquery/kbase/kbasePrompt.js'></script>
+        <script src = './jquery/kbase/kbaseDeletePrompt.js'></script>
         <script src = './jquery/kbase/kbaseLogin.js'></script>
-        <script src = './jquery/kbase/kbaseIrisTerminal.js'></script>
         <script src = './jquery/kbase/kbaseAccordion.js'></script>
         <script src = './jquery/kbase/kbaseTabs.js'></script>
         <script src = './jquery/kbase/kbaseNarrativeWorkspace.js'></script>
@@ -122,8 +122,6 @@
 
                     var client = new InvocationService('http://140.221.84.183:7049', undefined,
                         function() {
-                        console.log("GLOBAL CHECK HERE!");
-                        console.log(window.$ld);
                             var cookie_obj = window.$ld.get_kbase_cookie();
                             if (cookie_obj) {
                                 var token = cookie_obj['token'];

@@ -237,8 +237,8 @@
                         id : 'addbutton',
                         primary : 1,
                         callback : $.proxy( function(e) {
-                            var user_id  = this.data('openNarrativeDialog').data('user_id').val();
-                            var password = this.data('openNarrativeDialog').data('password').val();
+                            var user_id  = this.data('openNarrativeDialog').dialogModal().data('user_id').val();
+                            var password = this.data('openNarrativeDialog').dialogModal().data('password').val();
 
                             this.data('openNarrativeDialog').trigger('message', user_id);
 
@@ -261,19 +261,6 @@
 
             this._rewireIds($ond.dialogModal(), $ond.dialogModal());
             this.data('openNarrativeDialog', $ond);
-
-            $ond.dialogModal().on('shown',
-                $.proxy(
-                    function () {
-                        var $ond = this.data('openNarrativeDialog');
-                        console.log($ond);
-                        console.log($ond.dialogModal());
-                        console.log($ond.dialogModal().data());
-                        $ond.dialogModal().data("new_narrative").focus();
-                    },
-                    this
-                )
-            );
 
             return $ond;
 
