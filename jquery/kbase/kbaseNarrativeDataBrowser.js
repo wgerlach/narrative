@@ -15,7 +15,7 @@
             'height' : '110px',
             'tallHeight' : '450px',
             'shouldToggleNavHeight' : true,
-            'controlButtons' : ['deleteButton', 'viewButton', 'uploadButton', 'addDataButton' ],
+            'controlButtons' : ['deleteButton', 'viewButton', 'uploadButton', 'addDataButton','addDirectoryButton' ],
         },
 
         addDataButton : function() {

@@ -389,80 +389,38 @@
                         this.data('password').val('');
                         this.data("loggedinuser_id").text(args.name);
                         this.data("userdisplay").show();
-                        //this.data('loginDialog').trigger('clearMessages');
-                        //this.data('loginDialog').modal('hide');
                     }
                     else {
 
-                        var $errorModal = $('<div></div>')
-                            .attr('class', 'modal hide fade')
-                            .attr('tabindex', '-1')
-                            .append(
-                                $('<div></div>')
-                                    .attr('class', 'modal-body')
+                        var $errorModal = $('<div></div>').kbasePrompt(
+                            {
+                                title : 'Login failed',
+                                body : $('<div></div>')
+                                    .attr('class', 'alert alert-error')
                                     .append(
                                         $('<div></div>')
-                                            .attr('class', 'alert alert-error')
-                                            .attr('id', 'error')
+                                            .append(
+                                                $('<div></div>')
+                                                    .addClass('pull-left')
+                                                    .append(
+                                                        $('<i></i>')
+                                                            .addClass('icon-warning-sign')
+                                                            .attr('style', 'float: left; margin-right: .3em;')
+                                                    )
+                                            )
                                             .append(
                                                 $('<div></div>')
                                                     .append(
-                                                        $('<div></div>')
-                                                            .addClass('pull-left')
-                                                            .append(
-                                                                $('<i></i>')
-                                                                    .addClass('icon-warning-sign')
-                                                                    .attr('style', 'float: left; margin-right: .3em;')
-                                                            )
-                                                    )
-                                                    .append(
-                                                        $('<div></div>')
-                                                            .append(
-                                                                $('<strong></strong>').append(args.message)
-                                                            )
+                                                        $('<strong></strong>').append(args.message)
                                                     )
                                             )
                                     )
-                                    .append(
-                                        $('<div></div>')
-                                            .attr('class', 'modal-footer')
-                                            .append(
-                                                $('<a></a>')
-                                                    .attr('href', '#')
-                                                    .attr('class', 'btn btn-primary')
-                                                    .append('OK\n')
-                                                    .bind('click',
-                                                        function(e) {
-                                                            $(this).closest('.modal').modal('hide');
-                                                        }
-                                                    )
-                                                    .focus()
-                                            )
-                                        )
-                                )
-                            ;
-                        $errorModal.bind('shown',
-                            function (e) {
-                                $errorModal.unbind('keypress');
-                                $errorModal.keypress(
-                                    function(e) {
-                                        if (e.keyCode == 13) {
-                                            e.stopPropagation();
-                                            e.preventDefault();
-                                            $(this).find('a').trigger("click");
-                                        }
-                                    }
-                                )
+                                ,
+                                controls : ['okayButton'],
                             }
                         );
-                        $errorModal.bind('hidden',
-                            $.proxy(function (e) {
-                                e.stopPropagation();
-                                e.preventDefault();
-                                this.data('password').focus();
-                            }, this)
-                        );
-                        $errorModal.modal('show');
+                        $errorModal.openPrompt();
+
                     }
                 };
 
@@ -835,8 +793,6 @@
             this._rewireIds($ld.dialogModal(), $ld.dialogModal());
 
             this.data('loginDialog', $ld);
-
-            //$ld.modal({'keyboard' : true, 'show' : false});
 
             $ld.dialogModal().bind('error',
                 function(event, msg) {

@@ -355,101 +355,63 @@
         },
 
         addDirectory : function() {
-            var parentDir = this.data('activeDirectory') || '/';
+            var parentDir = this.data('activeDirectory') || this.options.root;
             var that = this;
 
-            var $addDirectoryModal =
-                $('<div></div>')
-                    .attr('class', 'modal hide fade')
-                    .attr('tabindex', '-1')
-                    .append(
-                        $('<div></div>')
-                            .attr('class', 'modal-header')
+            var $addDirectoryModal = $('<div></div>').kbasePrompt(
+                {
+                    title : 'Create directory',
+                    body : $('<p></p>')
+                            .append('Create directory ')
                             .append(
-                                $('<button></button>')
-                                    .attr('type', 'button')
-                                    .attr('class', 'close')
-                                    .attr('data-dismiss', 'modal')
-                                    .attr('aria-hidden', 'true')
-                                    .append('x\n')
+                                $('<span></span>')
+                                    .css('font-weight', 'bold')
+                                    .text(parentDir)
                             )
+                            .append(' ')
                             .append(
-                                $('<h3></h3>')
-                                    .append('Create directory\n')
-                            )
-                    )
-                    .append(
-                        $('<div></div>')
-                            .attr('class', 'modal-body')
-                            .append(
-                                $('<p></p>')
-                                    .append('Create directory \n')
-                                    .append(
-                                        $('<span></span>')
-                                            .css('font-weight', 'bold')
-                                    )
-                                    .append(' ')
-                                    .append(
-                                        $('<input></input>')
-                                            .attr('type', 'text')
-                                            .attr('name', 'dir_name')
-                                            .attr('size', '20')
-                                            .keypress(
-                                                function(e) {
-                                                    if (e.keyCode == 13) {
-                                                        $(this).closest('.modal').modal('hide');
-                                                        $(this).closest('.modal').find('a:last').trigger('click');
-                                                        e.stopPropagation();
-                                                    }
-                                                }
-                                            )
-                                    )
-                            )
-                    )
-                    .append(
-                        $('<div></div>')
-                            .attr('class', 'modal-footer')
-                            .append(
-                                $('<a></a>')
-                                    .attr('href', '#')
-                                    .attr('class', 'btn')
-                                    .append('Cancel\n')
-                                    .bind('click',
+                                $('<input></input>')
+                                    .attr('type', 'text')
+                                    .attr('name', 'dir_name')
+                                    .attr('size', '20')
+                                    .keypress(
                                         function(e) {
-                                            $(this).closest('.modal').modal('hide');
+                                            if (e.keyCode == 13) {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                $(this).closest('.modal').find('a:last').trigger('click');
+                                            }
                                         }
                                     )
                             )
-                            .append(
-                                $('<a></a>')
-                                    .attr('href', '#')
-                                    .attr('class', 'btn btn-primary')
-                                    .append('Create directory\n')
-                                    .bind('click',
-                                        function(e) {
-                                            $(this).closest('.modal').modal('hide');
-                                            that.client.make_directory_async(
-                                                that.sessionId,
-                                                parentDir,
-                                                $addDirectoryModal.find('input').val(),
-                                                function (res) { that.refreshDirectory(parentDir) },
-                                                function() {}
-                                                );
-                                        }
-                                    )
-                            )
-                    )
-            ;
-
-            $addDirectoryModal.find('span').text(parentDir);
-
-            $addDirectoryModal.on('shown',
-                function () {
-                    $addDirectoryModal.find('input').focus();
+                    ,
+                    controls : [
+                        'cancelButton',
+                        {
+                            name : 'Create directory',
+                            primary : 1,
+                            callback : function(e, $prompt) {
+                                $prompt.closePrompt();
+                                that.client.make_directory_async(
+                                    that.sessionId,
+                                    parentDir,
+                                    $addDirectoryModal.dialogModal().find('input').val(),
+                                    function (res) { that.refreshDirectory(parentDir) },
+                                    function() {}
+                                    );
+                            }
+                        }
+                    ]
                 }
             );
 
-            $addDirectoryModal.modal({'keyboard' : true});
+            $addDirectoryModal.dialogModal().on('shown',
+                function () {
+                    $addDirectoryModal.dialogModal().find('input').focus();
+                }
+            );
+
+            $addDirectoryModal.openPrompt();
 
 
         },
@@ -529,8 +491,8 @@
                         {
                             name : 'Delete',
                             primary : 1,
-                            callback : function(e) {
-                                $(this).closest('.modal').modal('hide');
+                            callback : function(e, $prompt) {
+                                $prompt.closePrompt();
                                 that.client[deleteMethod](
                                     that.sessionId,
                                     '/',

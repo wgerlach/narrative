@@ -1,5 +1,53 @@
 /*
 
+    Generic prompting widget. Documented via example!
+
+    var tab = 'Some Tab Value';
+
+    var $deleteModal = $('<div></div>').kbasePrompt(
+        {
+            title : 'Confirm deletion',
+            body : 'Really delete <strong>' + tab + '</strong>?',
+            controls : [
+                'cancelButton',
+                {
+                    name : 'Delete',
+                    primary : 1,
+                    callback : function(e, $prompt) {
+                        $prompt.closePrompt();
+                        if ($nav.hasClass('active')) {
+                            if ($nav.next('li').length) {
+                                $nav.next().find('a').trigger('click');
+                            }
+                            else {
+                                $nav.prev('li').find('a').trigger('click');
+                            }
+                        }
+                        $tab.remove();
+                        $nav.remove();
+                    }
+                }
+            ],
+            footer : 'Some footer value here',
+        }
+    );
+
+    $deleteModal.openPrompt();
+
+    It takes 4 values - title, body, and footer are jQuery objects containing HTML elements. They will
+    be placed as the title, body, and footer of the prompt, respectively. The footer is left justified.
+
+    controls is a little more involved, it governs the buttons used from left->right. Each element is either a string,
+    in which case it is a method call on the prompt object, or it's an object with a few keys:
+        name : the name to present on the button. It's appended, so you can use an icon!
+        primary : boolean true/false - determines if the button gets the btn-primary class. Should only be one.
+        callback: a function callback which is invoked when the button is clicked. The default is prevented.
+                  arguments received are the original event object and the associated prompt object. 'this' is the button.
+                  Note that the callback is expected to close the modal itself.
+        id : an id to tack onto the button, which will be rewired out of existance and hang on the prompt's data().
+    Default controls are cancelButton and okayButton, which do nothing other than close the prompt w/o action.
+
+    useful additional methods would be openPrompt() and closePrompt();
 
 */
 
@@ -38,6 +86,7 @@
         okayButton : function() {
             return {
                 name: 'Okay',
+                primary : 1,
                 callback : function (e, $prompt) {
                     $prompt.closePrompt();
                 }
@@ -90,8 +139,9 @@
                                 )
                                 .append(
                                     $('<div></div>')
-                                        .addClass('span4 offset2')
+                                        .addClass('span6')
                                         .attr('id', 'controls')
+                                        .css('white-space', 'nowrap')
                                 )
                         )
                 )

@@ -1,5 +1,34 @@
 /*
 
+    Easy widget to serve as a tabbed container.
+
+    var $tabs = $('#tabs').kbaseTabs(
+        {
+            tabPosition : 'bottom', //or left or right or top. Defaults to 'top'
+            canDelete : true,       //whether or not the tab can be removed. Defaults to false.
+            tabs : [
+                {
+                    tab : 'T1',                                     //name of the tab
+                    content : $('<div></div>').html("I am a tab"),  //jquery object to stuff into the content
+                    canDelete : false,                              //override the canDelete param on a per tab basis
+                },
+                {
+                    tab : 'T2',
+                    content : $('<div></div>').html("I am a tab 2"),
+                },
+                {
+                    tab : 'T3',
+                    content : $('<div></div>').html("I am a tab 3"),
+                    show : true,                                    //boolean. This tab gets shown by default. If not specified, the first tab is shown
+                },
+            ],
+        }
+    );
+
+    useful methods would be:
+
+    $('#tabs').kbaseTabs('showTab', 'T1');
+    $('#tabs').kbaseTabs('addTab', tabObject);  //the tabObject defined up above
 
 */
 
@@ -10,6 +39,7 @@
         version: "1.0.0",
         options: {
             tabPosition : 'top',
+            canDelete : false,
         },
 
         init: function(options) {
@@ -69,23 +99,23 @@
             if (tabs) {
                 $.each(
                     tabs,
-                    $.proxy(function (idx, val) {
-                        this.addTab(val.tab, val.content, val.show, val.canDelete);
+                    $.proxy(function (idx, tab) {
+                        this.addTab(tab);
                     }, this)
                 );
             }
 
         },
 
-        addTab : function (tab, content, show, canDelete) {
+        addTab : function (tab) {
 
-            if (canDelete == undefined) {
-                canDelete = this.options.canDelete;
+            if (tab.canDelete == undefined) {
+                tab.canDelete = this.options.canDelete;
             }
 
             var $tab = $('<div></div>')
                 .addClass('tab-pane fade')
-                .append(content);
+                .append(tab.content);
 
             var $that = this;   //thanks bootstrap! You suck!
 
@@ -94,10 +124,11 @@
                 .append(
                     $('<a></a>')
                         .attr('href', '#')
-                        .text(tab)
+                        .text(tab.tab)
                         .bind('click',
                             function (e) {
                                 e.preventDefault();
+                                e.stopPropagation();
 
                                 var previous = $that.data('tabs-nav').find('.active:last a')[0];
 
@@ -141,33 +172,54 @@
                             .bind('click', $.proxy(function (e) {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                if ($nav.hasClass('active')) {
-                                    if ($nav.next('li').length) {
-                                        $nav.next().find('a').trigger('click');
+
+                                var $deleteModal = $('<div></div>').kbasePrompt(
+                                    {
+                                        title : 'Confirm deletion',
+                                        body : 'Really delete <strong>' + tab.tab + '</strong>?',
+                                        controls : [
+                                            'cancelButton',
+                                            {
+                                                name : 'Delete',
+                                                primary : 1,
+                                                callback : function(e) {
+                                                    $deleteModal.closePrompt();
+                                                    if ($nav.hasClass('active')) {
+                                                        if ($nav.next('li').length) {
+                                                            $nav.next().find('a').trigger('click');
+                                                        }
+                                                        else {
+                                                            $nav.prev('li').find('a').trigger('click');
+                                                        }
+                                                    }
+                                                    $tab.remove();
+                                                    $nav.remove();
+                                                }
+                                            }
+                                        ]
                                     }
-                                    else {
-                                        $nav.prev('li').find('a').trigger('click');
-                                    }
-                                }
-                                $tab.remove();
-                                $nav.remove();
+                                );
+
+                                $deleteModal.openPrompt();
+
                             },this))
                     )
                 )
             ;
 
-            if (! canDelete) {
+            if (! tab.canDelete) {
                 $nav.find('button').remove();
             }
 
-            this.data('tabs')[tab] = $tab;
-            this.data('nav')[tab] = $nav;
+            this.data('tabs')[tab.tab] = $tab;
+            this.data('nav')[tab.tab] = $nav;
 
             this.data('tabs-content').append($tab);
             this.data('tabs-nav').append($nav);
-
-            if (show) {
-                this.showTab(tab);
+            var tabCount = 0;
+            for (t in this.data('tabs')) { tabCount++; }
+            if (tab.show || tabCount == 1) {
+                this.showTab(tab.tab);
             }
         },
 
