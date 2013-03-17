@@ -235,7 +235,7 @@
                     {
                         name : 'Add narrative',
                         id : 'addbutton',
-                        primary : 1,
+                        type : 'primary',
                         callback : $.proxy( function(e) {
                             var user_id  = this.data('openNarrativeDialog').dialogModal().data('user_id').val();
                             var password = this.data('openNarrativeDialog').dialogModal().data('password').val();

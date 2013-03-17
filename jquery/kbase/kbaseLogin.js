@@ -632,7 +632,7 @@
                         'cancelButton',
                         {
                             name     : 'Login',
-                            primary  : 1,
+                            type     : 'primary',
                             id       : 'loginbutton',
                             callback : $.proxy( function(e) {
                                 var user_id  = this.data('loginDialog').dialogModal().data('user_id').val();

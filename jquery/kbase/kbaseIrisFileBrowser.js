@@ -382,7 +382,7 @@
                         'cancelButton',
                         {
                             name : 'Create directory',
-                            primary : 1,
+                            type : 'primary',
                             callback : function(e, $prompt) {
                                 $prompt.closePrompt();
                                 that.client.make_directory_async(

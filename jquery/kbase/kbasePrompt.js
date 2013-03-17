@@ -12,7 +12,7 @@
                 'cancelButton',
                 {
                     name : 'Delete',
-                    primary : 1,
+                    type : 'primary',
                     callback : function(e, $prompt) {
                         $prompt.closePrompt();
                         if ($nav.hasClass('active')) {
@@ -40,7 +40,7 @@
     controls is a little more involved, it governs the buttons used from left->right. Each element is either a string,
     in which case it is a method call on the prompt object, or it's an object with a few keys:
         name : the name to present on the button. It's appended, so you can use an icon!
-        primary : boolean true/false - determines if the button gets the btn-primary class. Should only be one.
+        type : specify a bootstrap button type (primary, info, success, warning, danger, inverse, link)
         callback: a function callback which is invoked when the button is clicked. The default is prevented.
                   arguments received are the original event object and the associated prompt object. 'this' is the button.
                   Note that the callback is expected to close the modal itself.
@@ -86,7 +86,7 @@
         okayButton : function() {
             return {
                 name: 'Okay',
-                primary : 1,
+                type : 'primary',
                 callback : function (e, $prompt) {
                     $prompt.closePrompt();
                 }
@@ -181,8 +181,8 @@
                         val = $prompt[val]();
                     }
                     var btnClass = 'btn';
-                    if (val.primary) {
-                        btnClass = btnClass + ' btn-primary';
+                    if (val.type) {
+                        btnClass = btnClass + ' btn-' + val.type;
                     }
 
                     var $button =

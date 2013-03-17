@@ -50,7 +50,7 @@
                             'cancelButton',
                             {
                                 name : 'Delete',
-                                primary : 1,
+                                type : 'primary',
                                 callback : this.options.callback
                             }
                         ],
