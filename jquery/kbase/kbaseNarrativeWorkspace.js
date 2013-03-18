@@ -9,8 +9,11 @@
     $.kbWidget("kbaseNarrativeWorkspace", 'kbaseTabs', {
         version: "1.0.0",
         options: {
-            workspacetitle : 'd',
             narrativeRoot : '/narratives/',
+            narrativeDataRoot : '/narrative_data/',
+            canDelete : true,
+            border : true,
+            borderColor : 'lightgray',
         },
 
         init : function (options) {
@@ -25,7 +28,36 @@
                 this.$loginbox = options.$loginbox;
             }
 
+            this._narratives = {};
+
+            this.createNarrativesDirectories();
+
             return this;
+        },
+
+        narratives : function (narrative) {
+        console.log("LOAD UP " + narrative);
+        console.log(this._narratives);
+            if (narrative) {
+                return this._narratives[narrative];
+            }
+            else {
+                return this._narratives;
+            }
+        },
+
+        createNarrativesDirectories : function() {
+            this.client.make_directory_async(
+                this.user_id,
+                '/',
+                this.options.narrativeRoot.replace(/\/$/, '')
+            );
+
+            this.client.make_directory_async(
+                this.user_id,
+                '/',
+                this.options.narrativeDataRoot.replace(/\/$/, '')
+            );
         },
 
         sessionId : function() {
@@ -75,14 +107,6 @@
                             .css('padding', '2px')
                             .css('margin', '0px')
                             .css('position', 'relative')
-                            .bind('click',
-                                function(e) {
-                                    $(this).parent().children().last().collapse('toggle');
-                                    if (that.options.fileBrowser) {
-                                        that.options.fileBrowser.toggleNavHeight();
-                                    }
-                                }
-                            )
                             .append(
                                 $('<div></div>')
                                 .css('right', '0px')
@@ -131,6 +155,12 @@
 
             $ond.dialogModal().data('select_narrative').empty();
 
+            $ond.dialogModal().data('select_narrative')
+                .append(
+                    $('<option></option>')
+                        .text(' --- SELECT --- ')
+                );
+
             $.each(
                 narratives,
                 function (idx, val) {
@@ -154,7 +184,7 @@
 
             var $ond = $('<div></div>').kbasePrompt(
                 {
-                    title : 'Open narrative',
+                    title : 'Add narrative',
                     body :
                         $('<p></p>')
                             .append(
@@ -236,22 +266,48 @@
                         name : 'Add narrative',
                         id : 'addbutton',
                         type : 'primary',
-                        callback : $.proxy( function(e) {
-                            var user_id  = this.data('openNarrativeDialog').dialogModal().data('user_id').val();
-                            var password = this.data('openNarrativeDialog').dialogModal().data('password').val();
+                        callback : $.proxy( function(e, $prompt) {
+                            $prompt.closePrompt();
 
-                            this.data('openNarrativeDialog').trigger('message', user_id);
+                            var narrative;
+                            var data;
 
-                            this.login(user_id, password, function(args) {
+                            if (narrative = $prompt.dialogModal().data('new_narrative').val()) {
+                                console.log(narrative);
+                            }
+                            else if (narrative = $prompt.dialogModal().data('select_narrative').val()) {
+                                console.log(narrative);
+                            }
+                            if (instructionsFile = $prompt.dialogModal().data('upload').val()) {
+                                console.log(narrative);
 
-                                if (this.registerLogin) {
-                                    this.registerLogin(args);
-                                }
+                                var reader = new FileReader();
 
-                                if (this.options.login_callback) {
-                                    this.options.login_callback.call(this, args);
-                                }
-                            });
+                                reader.onload = $.proxy( function(e) {
+                                    this.addNarrative(
+                                        {
+                                            name : narrative,
+                                            workspace : this,
+                                            $loginbox : this.$loginbox,
+                                            client : this.client,
+                                            instructions : e.target.result
+                                        }
+                                    );
+                                }, this );
+
+                                reader.readAsText(instructionsFile);
+
+                            }
+                            else {
+                                this.addNarrative(
+                                    {
+                                        name : narrative,
+                                        workspace : this,
+                                        $loginbox : this.$loginbox,
+                                        client : this.client,
+                                    }
+                                )
+                            }
 
                         },this)
                     }
@@ -264,6 +320,45 @@
 
             return $ond;
 
+        },
+
+        addNarrative : function (narrative) {
+
+            if (this._narratives[narrative.name]) {
+                this.showTab(narrative.name);
+                return;
+            }
+
+            var $narrative = $('<div></div>').kbaseNarrative(narrative);
+
+            this.addTab(
+                {
+                    tab : $narrative.name(),
+                    content : $narrative.$elem,
+                    show : true,
+                }
+            );
+
+            this._narratives[$narrative.name()] = $narrative;
+
+        },
+
+        activeNarrative : function() {
+            return this._narratives[ this.activeTab() ];
+        },
+
+        deleteNarrative : function (narrative) {
+            this._narratives[narrative].save();
+            this._narratives[narrative] = undefined;
+            this.deleteTabCallback(narrative)();
+        },
+
+        deletePrompt : function(tabName) {
+            this.deleteNarrative(tabName);
+        },
+
+        deleteTabToolTip : function (tabName) {
+            return 'Close ' + tabName;
         },
 
 

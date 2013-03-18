@@ -6,7 +6,7 @@
         {
             title : 'This is a box',
             canCollapse: true,  //boolean. Whether or not clicking the title bar collapses the box
-            content: 'Moo. We are a box.',  //The content within the box. Any HTML string or jquery element
+            content: 'Moo. We are a box. Take us to China.',  //The content within the box. Any HTML string or jquery element
             //optional list of controls to populate buttons on the right end of the title bar. Give it an icon
             //and a callback function.
             controls : [
@@ -14,7 +14,8 @@
                     icon : 'icon-search',
                     callback : function(e) {
                         console.log("clicked on search");
-                    }
+                    },
+                    id : 'search' //optional. Keys the button to be available via $box.controls('search')
                 },
                 {
                     icon : 'icon-minus',
@@ -42,11 +43,15 @@
         options: {
             canCollapse : true,
             controls : [],
+            bannerColor : 'lightgray',
+            boxColor : 'lightgray',
         },
 
         init: function(options) {
 
             this._super(options);
+
+            this._controls = {};
 
             this.appendUI( $( this.$elem ) );
 
@@ -54,18 +59,51 @@
 
         },
 
+        startThinking : function() {
+            this.data('banner').addClass('progress progress-striped active')
+        },
+
+        stopThinking : function() {
+            this.data('banner').removeClass('progress progress-striped active')
+        },
+
         appendUI : function ($elem) {
             var canCollapse = this.options.canCollapse;
             var $div = $('<div></div>')
-                .css('border', '1px solid lightgray')
+                .css('border', '1px solid ' + this.options.boxColor)
                 .css('padding', '2px')
                 .append(
-                    $('<h5></h5>')
-                        .addClass('text-left')
-                        .css('background-color', 'lightgray')
-                        .css('padding', '2px')
+                    $('<div></div>')
+                        .attr('id', 'banner')
+                        .css('height', '24px')
                         .css('margin', '0px')
-                        .css('position', 'relative')
+                        .append(
+                            $('<h5></h5>')
+                                .addClass('text-left')
+                                .addClass('bar')
+                                .css('width', '100%')
+                                .css('background-color', this.options.bannerColor)
+                                .css('padding', '2px')
+                                .css('margin', '0px')
+                                .css('position', 'relative')
+                                .css('font-size', '14px')
+                                .css('color', 'black')
+                                .css('text-align', 'left')
+                                .css('text-shadow', 'none')
+                                .append(
+                                    $('<span></span>')
+                                        .attr('id', 'title')
+                                )
+                                .append(
+                                    $('<div></div>')
+                                    .addClass('btn-group')
+                                    .attr('id', 'control-buttons')
+                                    .css('right', '0px')
+                                    .css('top', '0px')
+                                    .css('position', 'absolute')
+                                    .append('foo, bar, baz')
+                                )
+                        )
                         .bind('click',
                             function(e) {
                                 e.preventDefault();
@@ -74,19 +112,6 @@
                                     $(this).parent().children().last().collapse('toggle');
                                 }
                             }
-                        )
-                        .append(
-                            $('<span></span>')
-                                .attr('id', 'title')
-                        )
-                        .append(
-                            $('<div></div>')
-                            .addClass('btn-group')
-                            .attr('id', 'control-buttons')
-                            .css('right', '0px')
-                            .css('top', '0px')
-                            .css('position', 'absolute')
-                            .append('foo, bar, baz')
                         )
                 )
                 .append(
@@ -118,8 +143,22 @@
             this.data('content').append(content);
         },
 
+        controls : function (control) {
+            if (control) {
+                return this._controls[control];
+            }
+            else {
+                return this._controls;
+            }
+        },
+
         setControls : function (controls) {
             this.data('control-buttons').empty();
+            for (control in this._controls) {
+                this._controls[control] = undefined;
+            }
+
+            var $box = this;
 
             $.each(
                 controls,
@@ -141,14 +180,18 @@
                                 function(e) {
                                     e.preventDefault();
                                     e.stopPropagation();
-                                    val.callback.call(this, e);
+                                    val.callback.call(this, e, $box);
                                 }
                             )
                     ;
+
+                    if (val.id) {
+                        this._controls[val.id] = $button;
+                    }
+
                     this.data('control-buttons').append($button);
                 },this)
             );
-
         },
 
 

@@ -40,6 +40,7 @@
         options: {
             tabPosition : 'top',
             canDelete : false,
+            borderColor : 'lightgray',
         },
 
         init: function(options) {
@@ -67,12 +68,12 @@
             ;
 
             var $tabs = $('<div></div>')
-                            .addClass('tab-content')
-                            .attr('id', 'tabs-content')
+                .addClass('tab-content')
+                .attr('id', 'tabs-content')
             ;
             var $nav = $('<ul></ul>')
-                            .addClass('nav nav-tabs')
-                            .attr('id', 'tabs-nav')
+                .addClass('nav nav-tabs')
+                .attr('id', 'tabs-nav')
             ;
 
             if (this.options.tabPosition == 'top') {
@@ -117,6 +118,13 @@
                 .addClass('tab-pane fade')
                 .append(tab.content);
 
+            if (this.options.border) {
+            console.log(this.options);
+                $tab.css('border', 'solid ' + this.options.borderColor);
+                $tab.css('border-width', '0px 1px 0px 1px');
+                $tab.css('padding', '3px');
+            }
+
             var $that = this;   //thanks bootstrap! You suck!
 
             var $nav = $('<li></li>')
@@ -125,6 +133,7 @@
                     $('<a></a>')
                         .attr('href', '#')
                         .text(tab.tab)
+                        .attr('data-tab', tab.tab)
                         .bind('click',
                             function (e) {
                                 e.preventDefault();
@@ -162,38 +171,18 @@
                     .append(
                         $('<button></button>')
                             .addClass('btn btn-mini')
-                            .append($('<i></i>').addClass('icon-minus'))
+                            .append($('<i></i>').addClass(this.closeIcon()))
                             .css('padding', '0px')
                             .css('width', '22px')
                             .css('height', '22px')
                             .css('margin-left', '10px')
-                            .attr('title', 'Remove tab')
+                            .attr('title', this.deleteTabToolTip(tab.tab))
                             .tooltip()
                             .bind('click', $.proxy(function (e) {
                                 e.preventDefault();
                                 e.stopPropagation();
 
-                                var $deleteModal = $('<div></div>').kbaseDeletePrompt(
-                                    {
-                                        name : tab.tab,
-                                        callback : function(e, $prompt) {
-                                                    $prompt.closePrompt();
-                                                    if ($nav.hasClass('active')) {
-                                                        if ($nav.next('li').length) {
-                                                            $nav.next().find('a').trigger('click');
-                                                        }
-                                                        else {
-                                                            $nav.prev('li').find('a').trigger('click');
-                                                        }
-                                                    }
-                                                    $tab.remove();
-                                                    $nav.remove();
-                                                }
-                                    }
-                                );
-
-                                $deleteModal.openPrompt();
-
+                                this.deletePrompt(tab.tab);
                             },this))
                     )
                 )
@@ -208,6 +197,7 @@
 
             this.data('tabs-content').append($tab);
             this.data('tabs-nav').append($nav);
+
             var tabCount = 0;
             for (t in this.data('tabs')) { tabCount++; }
             if (tab.show || tabCount == 1) {
@@ -215,8 +205,60 @@
             }
         },
 
+        closeIcon : function () { return 'icon-remove'; },
+
+        deleteTabToolTip : function (tabName) {
+            return 'Remove ' + tabName;
+        },
+
         showTab : function (tab) {
-            this.data('nav')[tab].find('a').trigger('click');
+            if (this.shouldShowTab(tab)) {
+                this.data('nav')[tab].find('a').trigger('click');
+            }
+        },
+
+        shouldShowTab : function (tab) { return 1; },
+
+        deletePrompt : function(tabName) {
+            var $deleteModal = $('<div></div>').kbaseDeletePrompt(
+                {
+                    name     : tabName,
+                    callback : this.deleteTabCallback(tabName),
+                }
+            );
+
+            $deleteModal.openPrompt();
+        },
+
+        deleteTabCallback : function (tabName) {
+            return $.proxy(function(e, $prompt) {
+                if ($prompt != undefined) {
+                    $prompt.closePrompt();
+                }
+
+                var $tab = this.data('tabs')[tabName];
+                var $nav = this.data('nav')[tabName];
+
+                if ($nav.hasClass('active')) {
+                    if ($nav.next('li').length) {
+                        $nav.next().find('a').trigger('click');
+                    }
+                    else {
+                        $nav.prev('li').find('a').trigger('click');
+                    }
+                }
+                if (this.shouldDeleteTab(tabName)) {
+                    $tab.remove();
+                    $nav.remove();
+                }
+            }, this);
+        },
+
+        shouldDeleteTab : function (tabName) { return 1; },
+
+        activeTab : function() {
+            var activeNav = this.data('tabs-nav').find('.active:last a')[0];
+            return $(activeNav).attr('data-tab');
         },
 
     });

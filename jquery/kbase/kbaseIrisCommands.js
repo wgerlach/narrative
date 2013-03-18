@@ -11,7 +11,7 @@
                 var f = $("#workspaces").data('addNarrativeCommand');
                 f(
                     $(this).attr('title'),
-                    $(this).data('blockType'),
+                    $(this).data('type'),
                     $(this).data('blockOptions')
                 );
             }
@@ -192,7 +192,7 @@
                 .append($('<a></a>')
                     .attr('href', '#')
                     .attr('title', cmd)
-                    .data('blockType', 'narrativeBlock')
+                    .data('type', 'invocation')
                     .css('display', 'list-item')
                     //.tooltip()
                     .text(label)
