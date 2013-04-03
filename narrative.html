@@ -12,16 +12,24 @@
         <link href="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.0/css/bootstrap-combined.no-icons.min.css" rel="stylesheet">
         <link href="http://netdna.bootstrapcdn.com/font-awesome/3.0.2/css/font-awesome.css" rel="stylesheet">
 
-		<script type="text/javascript" src="./jquery/spinner/jquery.spinner.js"></script>
-
         <script src = './jquery/kbase/kbaseWidget.js'></script>
+        <script src = './jquery/kbase/kbaseAuthenticatedWidget.js'></script>
         <script src = './jquery/kbase/kbasePrompt.js'></script>
         <script src = './jquery/kbase/kbaseDeletePrompt.js'></script>
+        <script src = './jquery/kbase/kbaseErrorPrompt.js'></script>
         <script src = './jquery/kbase/kbaseLogin.js'></script>
         <script src = './jquery/kbase/kbaseAccordion.js'></script>
         <script src = './jquery/kbase/kbaseTabs.js'></script>
+        <script src = './jquery/kbase/kbaseFormBuilder.js'></script>
+        <script src = './jquery/kbase/kbaseBox.js'></script>
+
         <script src = './jquery/kbase/kbaseNarrativeWorkspace.js'></script>
+        <script src = './jquery/kbase/kbaseNarrative.js'></script>
+        <script src = './jquery/kbase/kbaseNarrativeBlock.js'></script>
+        <script src = './jquery/kbase/kbaseNarrativeCommentBlock.js'></script>
+        <script src = './jquery/kbase/kbaseNarrativeInvocationBlock.js'></script>
         <script src = './jquery/kbase/kbaseIrisCommands.js'></script>
+        <script src = './jquery/kbase/kbaseFileBrowser.js'></script>
         <script src = './jquery/kbase/kbaseIrisFileBrowser.js'></script>
         <script src = './jquery/kbase/kbaseNarrativeDataBrowser.js'></script>
 
@@ -105,6 +113,15 @@
                         }
                     );*/
 
+                    $('#addComment').bind('click', function (e) {
+                        var $narrative = $('#tabs').kbaseNarrativeWorkspace('activeNarrative');
+                        console.log('here we go');
+                        console.log($narrative);
+                        console.log('a1');
+                        console.log('a2');
+                        $narrative.addBlock( {type : 'comment'} );
+                    });
+
                     window.$ld = $('#login').kbaseLogin(
                         {
                             style : 'text',
@@ -133,21 +150,6 @@
                         }
                     );
 
-                    /*$('#uploader').dataUploader(
-                        {
-                            client : client,
-                            action : function (filename) {
-                                var $selectedPanel = $('#workspaces').data('selectedPanel');
-                                $( $selectedPanel.children()[0] ).narrative(
-                                    'addDataBlock',
-                                        {
-                                            file : filename
-                                        }
-                                );
-                            }
-                        }
-                    );*/
-
                     $('#command-list').kbaseIrisCommands(
                         {
                             client          : client,
@@ -156,12 +158,21 @@
                             overflow        : true,
                             link : function (evt) {
                                 evt.preventDefault();
-                                var f = $("#workspaces").data('addNarrativeCommand');
+                                evt.stopPropagation();
+                                var $narrative = $('#tabs').kbaseNarrativeWorkspace('activeNarrative');
+                                console.log("ADDS LINK");console.log($(this).data());console.log($(this));
+                                $narrative.addBlock(
+                                    {
+                                        command : $(this).attr('title'),
+                                        type    : $(this).data('type')
+                                    }
+                                );
+                                /*var f = $("#workspaces").data('addNarrativeCommand');
                                 f(
                                     $(this).attr('title'),
                                     $(this).data('blockType'),
                                     $(this).data('blockOptions')
-                                );
+                                );*/
                             }
                         }
                     );
@@ -179,28 +190,50 @@
                     var $tabs = $('#tabs').kbaseNarrativeWorkspace(
                         {
                             client      : client,
-                            $loginbox : window.$ld,
+                            $loginbox   : window.$ld,
                             tabPosition : 'bottom',
-                            canDelete : true,
-                            tabs : [
+                            canDelete   : true,
+                        }
+                    );
+
+                    $tabs.addNarrative({name : 'shazbot'});
+
+                    var $box = $('#box').kbaseBox(
+                        {
+                            title : 'This is a box',
+                            content: 'Moo. We are a box.',
+                            precontent : 'Before the box',
+                            postcontent : 'after the box',
+                            controls : [
                                 {
-                                    tab : 'T1',
-                                    content : $('<div></div>').html("I am a tab"),
+                                    icon : 'icon-search',
+                                     callback : function(e, $prompt) {
+                                        console.log("clicked on search");
+                                    },
+                                    id : 'search',
                                 },
                                 {
-                                    tab : 'T2',
-                                    content : $('<div></div>').html("I am a tab 2"),
+                                    icon : 'icon-minus',
+                                    callback : function(e, $prompt) {
+                                        console.log("clicked on search");
+                                    },
+                                    id : 'minus',
                                 },
                                 {
-                                    tab : 'T3',
-                                    content : $('<div></div>').html("I am a tab 3"),
-                                    show : true,
+                                    icon : 'icon-plus',
+                                    callback : function(e, $prompt) {
+                                        console.log("clicked on search");
+                                    }
                                 },
+
                             ],
                         }
                     );
 
-                    $tabs.listNarratives(function (files) {console.log(files)});
+                    $box.controls('minus').css('display', 'none');
+
+
+//                    $tabs.listNarratives(function (files) {console.log(files)});
 
 //                    $tabs.addTab('T1', $('<div></div>').html("I am a tab"));
 //                    $tabs.addTab('T2', $('<div></div>').html("I am a tab 2"));
@@ -462,6 +495,9 @@
         <div class = 'row-fluid'>
             <div class = 'span3'>
                 <!--<img src = './img/kbase_logo.png'/ width = '220'><br/><br/>-->
+                <div>
+                    <button id = 'addComment' class = 'btn' style = 'width : 100%'>Add comment</button>
+                </div>
                 <div id = 'command-list'></div>
                 <div id = 'process-list'></div>
                 <div id = 'file-browser'></div>
@@ -469,6 +505,7 @@
             <div class = 'span9' style = 'position : relative'>
 
                 <div id = 'tabs'></div>
+                <div id = 'box'></div>
 
             </div>
         </div>

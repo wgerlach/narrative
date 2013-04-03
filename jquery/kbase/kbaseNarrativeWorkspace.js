@@ -277,7 +277,17 @@
                             }
                             else if (narrative = $prompt.dialogModal().data('select_narrative').val()) {
                                 console.log(narrative);
+                                console.log('(' + narrative + ')');
+                                if (narrative == '--- SELECT ---') {
+                                console.log('A MATCH!');
+                                    narrative = undefined;
+                                }
                             }
+
+                            if (narrative == undefined) {
+                                return;
+                            }
+
                             if (instructionsFile = $prompt.dialogModal().data('upload').val()) {
                                 console.log(narrative);
 
@@ -287,9 +297,6 @@
                                     this.addNarrative(
                                         {
                                             name : narrative,
-                                            workspace : this,
-                                            $loginbox : this.$loginbox,
-                                            client : this.client,
                                             instructions : e.target.result
                                         }
                                     );
@@ -302,9 +309,6 @@
                                 this.addNarrative(
                                     {
                                         name : narrative,
-                                        workspace : this,
-                                        $loginbox : this.$loginbox,
-                                        client : this.client,
                                     }
                                 )
                             }
@@ -323,6 +327,10 @@
         },
 
         addNarrative : function (narrative) {
+
+            narrative.workspace = this;
+            narrative.$loginbox = this.$loginbox;
+            narrative.client = this.client;
 
             if (this._narratives[narrative.name]) {
                 this.showTab(narrative.name);

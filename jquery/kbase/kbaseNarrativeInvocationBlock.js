@@ -44,14 +44,15 @@
             if (options.label == undefined) {
                 options.label = options.command;
             }
+            this._super(options);
 
-console.log("I HAZ OPTIONS");console.log(options);
+            this.loadFile();
 
-            return this._super(options);
+            return this;
         },
 
         commandString : function() {
-            var args = this.data('command-interface').formBuilder('getFormValuesAsString');
+            var args = this.data('command-interface').kbaseFormBuilder('getFormValuesAsString');
 
             return [this.options.name, args].join(' ');
         },
@@ -86,12 +87,44 @@ console.log("I HAZ OPTIONS");console.log(options);
                         )
                 )
                 .append(
-                    $interface.$elem
+                    $('<div></div>')
+                        .addClass('row')
+                        .append(
+                            $('<div></div>')
+                                .addClass('span10')
+                                .append($interface.$elem)
+                        )
+                        .append(
+                            $('<div></div>')
+                                .addClass('span2')
+                                .append(
+                                    $('<div></div>')
+                                        .attr('id', 'output')
+                                        .css('width', '100%')
+                                        .css('height', '100px')
+                                        .css('border', '1px solid green')
+                                        .css('display', 'none')
+                                        .css('font-size', '4px')
+                                        .css('overflow', 'hidden')
+                                        .bind('click',
+                                            $.proxy(function (e) {
+                                                $("<div></div>").kbaseIrisFileBrowser(
+                                                    {
+                                                        client    : this.narrative.client,
+                                                        $loginbox : this.narrative.$loginbox
+                                                    }
+                                                ).openFile(this.narrative.wd + '/' + this.outputFile());
+                                            },this)
+                                        )
+                                )
+                        )
                 )
             ;
 
             var $box = $('<div></div>').kbaseBox(
                 {
+                    precontent : this.options.inputType,
+                    postcontent : this.options.outputType,
                     title : this.options.label,
                     canCollapse: false,
                     content: $content,
@@ -105,10 +138,88 @@ console.log("I HAZ OPTIONS");console.log(options);
                         },
                         {
                             icon : 'icon-play',
-                            callback : function(e, $box) {
-                                console.log("clicked on run");
-                                $box.startThinking();
-                            },
+                            callback : $.proxy(function(e, $box) {
+                                if (! this.running) {
+                                    this.appendOutput(undefined);
+                                    this.running = true;
+                                    console.log("clicked on run");
+                                    $box.startThinking();
+                                    this.data('command-lastrun').empty();
+                                    this.data('command-lastrun').append((new Date).toJSON());
+                                    console.log(this.commandString());
+
+                                    var command = this.options.command + this.commandString()
+
+                                    if (this.options.inputType.length) {
+                                        var $before = this.$elem.prev();
+
+                                        while ($before.length) {
+                                            if ($before.data('blockType') == 'invocation') {
+                                                if ($before.kbaseNarrativeInvocationBlock('data', 'state') == 'error') {
+                                                    this.enterErrorState();
+                                                    this.appendOutputUI("Cannot run - input block is in error condition");
+                                                    return;
+                                                }
+                                                command += ' < ' + $before.kbaseNarrativeInvocationBlock('outputFile') + ' ';
+                                                break;
+                                            }
+                                            else if ($before.data('blockType') == 'data') {
+                                                command += ' < ' + $before.dataBlock('filePath') + ' ';
+                                                break;
+                                            }
+                                            else {
+                                                $before = $before.prev();
+                                            }
+                                        }
+                                    }
+
+
+                                    var command = command + ' > ' + this.outputFile();
+
+                                    console.log(command);
+
+                                    this.narrative.client.run_pipeline_async(
+                                        this.narrative.user_id,
+                                        command,
+                                        [],
+                                        undefined,
+                                        this.narrative.wd,
+                                        $.proxy(
+                                            function (res) {
+                                                //console.log(res);
+                                                this.running = false;
+                                                $box.stopThinking();
+                                                if (res[1][0] != undefined && ! res[1][0].match(/ 0$/)) {
+                                                    //var errorMsg = res[1].join("");
+                                                    //this.appendOutputUI(errorMsg);
+                                                    //this.enterErrorState();
+                                                    //this.narrative.save();
+                                                }
+                                                else {
+console.log(res);
+                                                    if (res[1].length > 1) {
+                                                        //this.appendOutputUI(res[1][1]);
+                                                        console.log("GOT RES " + res[1][1]);
+                                                        this.appendOutput(res[1][1]);
+                                                    }
+                                                    else {
+                                                        this.loadFile();
+                                                    }
+                                                }
+
+                                            },
+                                            this
+                                        ),
+                                        function (err) { console.log("RUN FAILURE"); console.log(err) }
+                                    );
+
+
+                                }
+                                else {
+                                    $box.stopThinking();
+                                    this.running = false;
+                                }
+                            }, this),
                             id : 'run'
                         },
                         {
@@ -142,6 +253,41 @@ console.log("I HAZ OPTIONS");console.log(options);
             $elem.append($box.$elem);
 
             return this;
+        },
+
+        loadFile : function() {
+            this.narrative.client.get_file_async(
+                this.narrative.user_id,
+                this.options.id,
+                this.narrative.wd,
+                $.proxy(
+                    function (res) {
+                        this.appendOutput(res);
+                    },
+                    this
+                )
+                //function (err) { this.dbg("FILE FAILURE"); this.dbg(err) }
+            );
+        },
+
+        appendOutput : function (results) {
+
+            this.data('output').empty();
+
+            this.data('output').css('display', results == undefined ? 'none' : 'block');
+
+            if (results != undefined) {
+                this.data('output').text(results.substr(results, this.options.outputTruncate));
+            }
+            this.output = results;
+        },
+
+        outputFile : function () {
+            return this.options.id;
+        },
+
+        output : function() {
+            return this.output;
         },
 
         blockDefinition : function() {
@@ -643,8 +789,8 @@ console.log("I HAZ OPTIONS");console.log(options);
                     }
                 }
 
-                if (this.options.id) {
-                    command += ' > ' + this.options.id + ' ';
+                if (this.outputFile()) {
+                    command += ' > ' + this.outputFile() + ' ';
                 }
                 //console.log("RUNS COMMAND " + command);
                 this.narrative.client.run_pipeline_async(
