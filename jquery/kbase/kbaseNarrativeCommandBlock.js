@@ -41,11 +41,6 @@
             return this;
         },
 
-        commandString : function() {
-            var args = this.data('command-interface').kbaseFormBuilder('getFormValuesAsString');
-            return [this.options.command, args].join(' ');
-        },
-
         linkButton : function() {
             return {
                 icon : 'icon-link',
@@ -163,6 +158,17 @@
                     canCollapse: false,
                     content: $content,
                     controls : this.controls(),
+                    bannerCallback : $.proxy( function($box) {
+                        if (this.activeBlock) {
+                            $box.setBoxColor('green');
+                            this.activeBlock = false;
+                        }
+                        else {
+                            $box.setBoxColor($box.options.boxColor);
+                            this.activeBlock = true;
+
+                        }
+                    }, this),
                 }
             );
 

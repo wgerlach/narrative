@@ -24,6 +24,11 @@
                 ],
         },
 
+        commandString : function() {
+            var args = this.data('command-interface').kbaseFormBuilder('getFormValuesAsString');
+            return [this.options.command, args].join(' ');
+        },
+
         blockInterface : function() {
             var $interface = $('<div></div>').kbaseFormBuilder(
                 {

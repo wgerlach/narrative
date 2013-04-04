@@ -59,6 +59,11 @@
 
         },
 
+        setBoxColor : function(color) {
+            this.setBannerColor(color);
+            this.data('bannerBox').css('border-color', color);
+        },
+
         setBannerColor : function(color) {
             this.data('banner').css('background-color', color);
         },
@@ -72,7 +77,7 @@
         },
 
         appendUI : function ($elem) {
-            var canCollapse = this.options.canCollapse;
+            var that = this;
             var $div = $('<div></div>')
                 .append(
                     $('<div></div>')
@@ -85,6 +90,7 @@
                     $('<div></div>')
                         .css('border', '1px solid ' + this.options.boxColor)
                         .css('padding', '2px')
+                        .attr('id', 'bannerBox')
                         .append(
                             $('<div></div>')
                             //.addClass('progress')
@@ -111,7 +117,10 @@
                                         function(e) {
                                             e.preventDefault();
                                             e.stopPropagation();
-                                            if (canCollapse) {
+                                            if (that.options.bannerCallback) {
+                                                that.options.bannerCallback(that);
+                                            }
+                                            else if (that.options.canCollapse) {
                                                 //$(this).parent().parent().children().last().collapse('toggle');
                                                 $(this).parent().next().collapse('toggle');
                                             }
