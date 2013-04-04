@@ -112,7 +112,8 @@
                                             e.preventDefault();
                                             e.stopPropagation();
                                             if (canCollapse) {
-                                                $(this).parent().parent().children().last().collapse('toggle');
+                                                //$(this).parent().parent().children().last().collapse('toggle');
+                                                $(this).parent().next().collapse('toggle');
                                             }
                                         }
                                     )

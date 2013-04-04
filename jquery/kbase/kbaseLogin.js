@@ -81,14 +81,13 @@
             }
 
             chips.success = 1;
-
             return field == undefined
                 ? chips
                 : chips[field];
         },
 
         sessionId : function () {
-            return this.get_kbase_cookie('kbase_session_id');
+            return this.get_kbase_cookie('kbase_sessionid');
         },
 
         init: function(options) {
@@ -196,6 +195,8 @@
                         .text('Sign In')
                         .bind('click',
                             $.proxy( function(e) {
+                                e.preventDefault();
+                                e.stopPropagation();
                                 this.openDialog();
                             }, this)
                         )

@@ -9,6 +9,7 @@
     $.kbWidget("kbaseNarrativeDataBrowser", 'kbaseIrisFileBrowser', {
         version: "1.0.0",
         options: {
+            'name' : 'Uploaded data',
             'root' : '/',
             'controls' : true,
             'externalControls' : true,
