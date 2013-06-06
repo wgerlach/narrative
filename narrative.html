@@ -138,7 +138,7 @@
                         }
                     )
 
-                    var client = new InvocationService('http://140.221.84.183:7049', undefined,
+                    var client = new InvocationService('http://kbase.us/services/invocation', undefined,
                         function() {
                             var cookie_obj = window.$ld.get_kbase_cookie();
                             if (cookie_obj) {
@@ -183,7 +183,7 @@
                             client : client,
                             $loginbox : window.$ld,
                             externalControls : true,
-                            root : '/narrative_data',
+                            root : '/narrative_data/',
                             //controlButtons : ['viewButton', 'deleteButton', 'uploadButton' ],
                         }
                     );

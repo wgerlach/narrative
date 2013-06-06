@@ -228,7 +228,7 @@
                                         this.logout();
                                     }, this)
                                 )
-                                .append($('<i></i>').addClass('icon-remove-circle'))
+                                .append($('<i></i>').addClass('icon-signout'))
                         )
                 )
             ;
@@ -359,7 +359,7 @@
                                 .append(
                                     $('<i></i>')
                                         .attr('id', 'logouticon')
-                                        .addClass('icon-remove-circle')
+                                        .addClass('icon-signout')
                                 )
                         )
                 );

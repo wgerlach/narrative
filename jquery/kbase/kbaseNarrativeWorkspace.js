@@ -48,13 +48,13 @@
 
         createNarrativesDirectories : function() {
             this.client.make_directory_async(
-                this.user_id,
+                this.sessionId(),
                 '/',
                 this.options.narrativeRoot.replace(/\/$/, '')
             );
 
             this.client.make_directory_async(
-                this.user_id,
+                this.sessionId(),
                 '/',
                 this.options.narrativeDataRoot.replace(/\/$/, '')
             );
