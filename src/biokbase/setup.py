@@ -21,7 +21,7 @@ setup(
     install_requires=["requests>=1.0", "pyyaml>=3.1",
                       "rsa", "pyasn1", "paramiko", "pycrypto"],
     extras_require={},
-    package_data={"": ["*.json", "*.js"]},
+    package_data={"": ["*.json", "narrative/widgets/js/*/*.js"]},
     author="Steve Chan, Dan Gunter",
     author_email="sychan@lbl.gov, dkgunter@lbl.gov",
     maintainer="Steve Chan, Dan Gunter",
