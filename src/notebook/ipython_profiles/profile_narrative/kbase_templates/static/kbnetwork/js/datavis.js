@@ -11532,8 +11532,8 @@ if ( typeof KBVis.define === 'function' && KBVis.define.amd && KBVis.define.amd.
 
 })( window );
 
-KBVis.define("noconflict", ["jquery"], function (JQ) {
-	return JQ.noConflict(false);
+KBVis.define("noconflict", ["jquery"], function ($) {
+	return $.noConflict(false);
 });
 d3 = function() {
   var d3 = {
@@ -20536,8 +20536,8 @@ KBVis.define("underscore", (function (global) {
     };
 }(this)));
 
-KBVis.define('util/eventemitter',['jquery'], function (JQ) {
-    var jq = JQ(this);
+KBVis.define('util/eventemitter',['jquery'], function ($) {
+    var jq = $(this);
     return {
         emit: function (evt, data) {
             jq.trigger(evt, data);
@@ -20553,12 +20553,12 @@ KBVis.define('util/eventemitter',['jquery'], function (JQ) {
         }
     };
 });
-KBVis.define('util/dragbox',['jquery', 'util/eventemitter'], function (JQ, EventEmitter) {
+KBVis.define('util/dragbox',['jquery', 'util/eventemitter'], function ($, EventEmitter) {
     var FGCOLOR = "red";
     function DragBox(element, options) {
         var self = this;
         options = (options || {})
-        element = JQ(element);
+        element = $(element);
 
         var tool = new Object();
         tool.started = false;
@@ -20569,7 +20569,7 @@ KBVis.define('util/dragbox',['jquery', 'util/eventemitter'], function (JQ, Event
             text:      null
         };
 
-        var canvas = JQ("<canvas>")
+        var canvas = $("<canvas>")
             .attr("width", element.width())
             .attr("height", element.height())
             .css("position", "absolute")
@@ -20664,12 +20664,12 @@ KBVis.define('util/dragbox',['jquery', 'util/eventemitter'], function (JQ, Event
             handlers.text = callback;
         }
     }
-    JQ.extend(DragBox.prototype, EventEmitter);
+    $.extend(DragBox.prototype, EventEmitter);
     return DragBox;
     
 });
 KBVis.define('renderers/heatmap',['jquery', 'd3', 'underscore', 'util/dragbox'],
-function (JQ, d3, _, DragBox) {
+function ($, d3, _, DragBox) {
     var MAX_CELLS = 24000;
     var MIN_CELL_SIZE = 4;
     var MAX_CELL_SIZE = 60;
@@ -20684,7 +20684,7 @@ function (JQ, d3, _, DragBox) {
         var self = this;
         options = options ? _.clone(options) : {};
         _.defaults(options, defaults);
-        var element = JQ(options.element);
+        var element = $(options.element);
         
         var matrix = [], row, columns;
         var maxScore;
@@ -20751,7 +20751,7 @@ function (JQ, d3, _, DragBox) {
             var adjWidth  = adjustedDim(columns);
             var adjHeight = adjustedDim(rows);
             var containerId = element.attr('id') + "-container";
-            var container = JQ("<div>").attr("id", containerId)
+            var container = $("<div>").attr("id", containerId)
                 .css("position", "relative")
                 .width(width)
                 .height(height);
@@ -20797,7 +20797,7 @@ function (JQ, d3, _, DragBox) {
             var quantize = d3.scale
                 .quantile().domain([0, maxScore]).range(d3.range(9));
             var dragbox =
-                new DragBox(JQ("#" + element.attr('id') + "-plotarea"));
+                new DragBox($("#" + element.attr('id') + "-plotarea"));
             dragbox.textHandler(function (x, y, w, h) {
                 return [w, h].join(" ");
             })
@@ -20866,10 +20866,10 @@ KBVis.define('util/scale',[],function () {
 	return Scale;
 });
 KBVis.define('renderers/manhattan',['jquery', 'util/eventemitter', 'util/dragbox', 'util/scale'],
-function (JQ, EventEmitter, DragBox, Scale) {
+function ($, EventEmitter, DragBox, Scale) {
     function createCanvas(container, options) {
         options = (options || {});
-        var canvas = JQ("<canvas>")
+        var canvas = $("<canvas>")
             .attr("width", container.width())
             .attr("height", container.height())
             .css("position", "absolute")
@@ -20885,7 +20885,7 @@ function (JQ, EventEmitter, DragBox, Scale) {
         options = options || {};
         options.filterContig =
             (options.filterContig || function () { return false; });
-        var $element = JQ(options.element);
+        var $element = $(options.element);
         
         var yAxis = new Scale(),
             xAxis = new Scale();
@@ -20942,7 +20942,7 @@ function (JQ, EventEmitter, DragBox, Scale) {
             canvasWidth  = containerWidth  - YAXIS_WIDTH;
             $element.css("position", "relative");
             self.plotArea =
-                JQ('<div>').css("position", "absolute").css("left", YAXIS_WIDTH);
+                $('<div>').css("position", "absolute").css("left", YAXIS_WIDTH);
             self.plotArea.width(canvasWidth).height(canvasHeight);
             ctx = createCanvas(self.plotArea, { z: 5 });
             $element.append(self.plotArea);
@@ -21231,7 +21231,7 @@ function (JQ, EventEmitter, DragBox, Scale) {
         }
     };
 
-    JQ.extend(ManhattanPlot.prototype, EventEmitter);    
+    $.extend(ManhattanPlot.prototype, EventEmitter);    
     return ManhattanPlot;
 });
 /*! jQuery UI - v1.10.3 - 2013-05-03
@@ -36240,7 +36240,7 @@ $.widget( "ui.tooltip", {
 
 KBVis.define("jquery-ui", ["jquery"], function(){});
 
-KBVis.define('util/hud',["jquery", "underscore", "jquery-ui"], function(JQ, _) {
+KBVis.define('util/hud',["jquery", "underscore", "jquery-ui"], function($, _) {
     var defaults = {
         position: { top: 20, left: 20 },
         element: "body",
@@ -36253,23 +36253,23 @@ KBVis.define('util/hud',["jquery", "underscore", "jquery-ui"], function(JQ, _) {
         var self = this;
         options = options ? _.clone(options) : {}; 
         _.defaults(options, defaults);
-        var $hud = JQ("<div>").addClass("hud")
+        var $hud = $("<div>").addClass("hud")
             .css("width", options.width)
             .css("min-height", options.height)
             .css("display", "none")
             .css("position", "absolute");
         if (options.z != undefined) { $hud.css("z-index", options.z) };
-        var $content = JQ("<div>").addClass("hud-content");
+        var $content = $("<div>").addClass("hud-content");
         if (options.close) {
             function closeButton() {
-                var button = JQ("<button>").addClass("close").html("&times;");
+                var button = $("<button>").addClass("close").html("&times;");
                 button.on("click", function () { self.dismiss() });
                 return button;
             }
             $hud.append(closeButton());
         }
         if (options.title) {
-            $hud.append(JQ("<h4>", { id: "title" }).text(options.title));
+            $hud.append($("<h4>", { id: "title" }).text(options.title));
         } else {
             $content.css("margin", "15px 0 0").css("padding", 0);
         }
@@ -36280,9 +36280,9 @@ KBVis.define('util/hud',["jquery", "underscore", "jquery-ui"], function(JQ, _) {
         for (var prop in options.position) {
             $hud.css(prop, options.position[prop]);
         }
-        JQ(options.element).append($hud);
+        $(options.element).append($hud);
         if (options.width) { $hud.width(options.width) }
-        JQ.extend(this, $content);
+        $.extend(this, $content);
         
         self.show = function () {
             $hud.fadeIn();
@@ -36296,7 +36296,7 @@ KBVis.define('util/hud',["jquery", "underscore", "jquery-ui"], function(JQ, _) {
     return HUD;
 });
 KBVis.define('util/dock',['jquery', 'd3', 'util/eventemitter', 'util/hud'],
-function (JQ, d3, EventEmitter, HUD) {
+function ($, d3, EventEmitter, HUD) {
     
     var DOCK_HEIGHT = 30;
     var Dock = function (parentElement) {  
@@ -36308,11 +36308,11 @@ function (JQ, d3, EventEmitter, HUD) {
         var docked = {};
         var updateActions = [];
         if (parent) { setParent(parent) }
-        var dockRenderPromise = JQ.Deferred();
+        var dockRenderPromise = $.Deferred();
         
         var dockHudContentCallback = function (nodes) {
             var dock = this;
-            var list = JQ("<ul>");
+            var list = $("<ul>");
             dock.hud.append(list);
             nodes.forEach(function (d) {
                 list.append("<li>" + d.name + "</li>");
@@ -36497,7 +36497,7 @@ function (JQ, d3, EventEmitter, HUD) {
         self.showHUD = dockhud;
     };
     
-    JQ.extend(Dock.prototype, EventEmitter);
+    $.extend(Dock.prototype, EventEmitter);
     return Dock;
 });
 (function (exports) {
@@ -36919,7 +36919,7 @@ KBVis.define("revalidator", (function (global) {
 
 KBVis.define('renderers/network',['jquery', 'd3', 'underscore',
     'util/dock', 'util/eventemitter', 'util/hud', 'revalidator'],
-function (JQ, d3, _, Dock, EventEmitter, HUD, Revalidator) {
+function ($, d3, _, Dock, EventEmitter, HUD, Revalidator) {
     
     var FIX_NODE_DELAY = 2000;
     var defaults = {
@@ -37001,7 +37001,7 @@ function (JQ, d3, _, Dock, EventEmitter, HUD, Revalidator) {
         var self = this;
         options = options ? _.clone(options) : {};
         _.defaults(options, defaults);
-        var $element = JQ(options.element);
+        var $element = $(options.element);
         var _idSequence = 1;
         var _autoUpdate = false;
         var _initialized = false;
@@ -37582,16 +37582,16 @@ function (JQ, d3, _, Dock, EventEmitter, HUD, Revalidator) {
 
         function nodeInfo(d) {
             var $table =
-                JQ("<table/>", {
+                $("<table/>", {
                     id: "nodeInfo",
                     class: "table table-condensed"
                 })
-                .append(JQ("<tbody/>"));
+                .append($("<tbody/>"));
             function row(key, val) {
                 if (!val) return;
-                $table.find("tbody").append(JQ("<tr>")
-                    .append(JQ("<th>").text(key))
-                    .append(JQ("<td>").html(val))
+                $table.find("tbody").append($("<tr>")
+                    .append($("<th>").text(key))
+                    .append($("<td>").html(val))
                 );
             }
             if (options.nodeInfo === undefined) {
@@ -37808,7 +37808,7 @@ function (JQ, d3, _, Dock, EventEmitter, HUD, Revalidator) {
         };
         self.setElement = function (element) {
             options.element = element;
-            $element = JQ(options.element);
+            $element = $(options.element);
         };
         self.dock = dock;
         self.update = update;
@@ -37834,11 +37834,11 @@ function (JQ, d3, _, Dock, EventEmitter, HUD, Revalidator) {
         
         return self;
     };
-    JQ.extend(Network.prototype, EventEmitter);
+    $.extend(Network.prototype, EventEmitter);
     return Network;
 });
 KBVis.define('renderers/table',['jquery', 'underscore'],
-    function (JQ, _) {
+    function ($, _) {
     var defaults = {
         scrollY: 300,
         element: "body",
@@ -37862,10 +37862,10 @@ KBVis.define('renderers/table',['jquery', 'underscore'],
             return self.data;
         };
         self.render = function (args) {
-            var $element = JQ(options.element);
+            var $element = $(options.element);
             var elementOffset = $element.offset();
             args = args ? _.clone(args) : {};
-            var $table = JQ("<table>").attr("cellpadding", 0)
+            var $table = $("<table>").attr("cellpadding", 0)
                 .attr("cellspacing",0).attr("border", 0)
                 .addClass('table table-striped table-bordered');
             $element.empty().append($table);
@@ -37898,7 +37898,7 @@ KBVis.define('renderers/table',['jquery', 'underscore'],
                     });
                     adjustHeight('.dataTables_wrapper');
                     adjustHeight('.table-wrapper');
-                    JQ(".column-filter-widget").find("select").addClass("mini");
+                    $(".column-filter-widget").find("select").addClass("mini");
                     $element.offset({
                         top: elementOffset.top, left: elementOffset.left
                     });
@@ -37907,12 +37907,12 @@ KBVis.define('renderers/table',['jquery', 'underscore'],
             });
         };
         function adjustHeight(selector) {
-            JQ(selector).each(function () {
-                var w = JQ(this);
+            $(selector).each(function () {
+                var w = $(this);
                 var p = w.parent();
                 var totalHeight = 0;
                 p.children().each(function () {
-                    totalHeight += JQ(this).outerHeight(true)
+                    totalHeight += $(this).outerHeight(true)
                 });
                 w.css("min-height",
                     p.height() + w.outerHeight(true) - totalHeight);
@@ -37922,15 +37922,15 @@ KBVis.define('renderers/table',['jquery', 'underscore'],
     
     function dataTableBehavior() {
         /* Set the defaults for DataTables initialization */
-        JQ.extend(true, JQ.fn.dataTable.defaults, {
+        $.extend(true, $.fn.dataTable.defaults, {
             sDom: "<'dt-top'Wlfr>" +
                  "<'table-wrapper't><'dt-bottom'ip>",
             fnInitComplete: function (table) {
-                JQ('.dataTables_length').find("select").addClass("col-md-2");
-                JQ('.dataTables_filter').find(":input")
+                $('.dataTables_length').find("select").addClass("col-md-2");
+                $('.dataTables_filter').find(":input")
                     .addClass("input-small search-query")
                     .attr("placeholder", "Search");
-                JQ('.dataTables_length > label').contents().filter(function() {
+                $('.dataTables_length > label').contents().filter(function() {
                     return this.nodeType != 1;
                 }).wrap("<span class='mini help-inline'>");
             },
@@ -37944,13 +37944,13 @@ KBVis.define('renderers/table',['jquery', 'underscore'],
 
 
         /* Default class modification */
-        JQ.extend(JQ.fn.dataTableExt.oStdClasses, {
+        $.extend($.fn.dataTableExt.oStdClasses, {
             sWrapper: "dataTables_wrapper form-inline",
             sInfo: "mini muted dt-info"
         });
 
         /* API method to get paging information */
-        JQ.fn.dataTableExt.oApi.fnPagingInfo = function (opts) {
+        $.fn.dataTableExt.oApi.fnPagingInfo = function (opts) {
             return {
                 iStart:         opts._iDisplayStart,
                 iEnd:           opts.fnDisplayEnd(),
@@ -37966,7 +37966,7 @@ KBVis.define('renderers/table',['jquery', 'underscore'],
 
 
         /* Bootstrap style pagination control */
-        JQ.extend(JQ.fn.dataTableExt.oPagination, {
+        $.extend($.fn.dataTableExt.oPagination, {
             bootstrap: {
                 fnInit: function (opts, nPaging, fnDraw) {
                     var oLang = opts.oLanguage.oPaginate;
@@ -37976,7 +37976,7 @@ KBVis.define('renderers/table',['jquery', 'underscore'],
                             fnDraw(opts);
                         }
                     };
-                    JQ(nPaging).addClass('pagination pagination-mini').append(_.template(
+                    $(nPaging).addClass('pagination pagination-mini').append(_.template(
                         '<ul>' +
                             '<li class="prev disabled">' +
                             '<a href="#">&larr;</a></li>'+
@@ -37984,10 +37984,10 @@ KBVis.define('renderers/table',['jquery', 'underscore'],
                             '<a href="#">&rarr;</a></li>'+
                         '</ul>', { prev: oLang.sPrevious, next: oLang.sNext })
                     );
-                    var els = JQ('a', nPaging);
-                    JQ(els[0]).bind('click.DT',
+                    var els = $('a', nPaging);
+                    $(els[0]).bind('click.DT',
                         { action: "previous" }, fnClickHandler);
-                    JQ(els[1]).bind('click.DT',
+                    $(els[1]).bind('click.DT',
                         { action: "next" }, fnClickHandler);
                 },
                 fnUpdate: function (opts, fnDraw) {
@@ -38013,31 +38013,31 @@ KBVis.define('renderers/table',['jquery', 'underscore'],
 
                     for (i=0, iLen=an.length ; i<iLen ; i++) {
                         // Remove the middle elements
-                        JQ('li:gt(0)', an[i]).filter(':not(:last)').remove();
+                        $('li:gt(0)', an[i]).filter(':not(:last)').remove();
 
                         // Add the new list items and their event handlers
                         for (j=iStart ;j<=iEnd ;j++) {
                             sClass = (j==oPaging.iPage+1) ? 'class="active"' : '';
-                            JQ('<li '+sClass+'><a href="#">'+j+'</a></li>')
-                                .insertBefore(JQ('li:last', an[i])[0])
+                            $('<li '+sClass+'><a href="#">'+j+'</a></li>')
+                                .insertBefore($('li:last', an[i])[0])
                                 .bind('click', function (e) {
                                     e.preventDefault();
-                                    opts._iDisplayStart = (parseInt(JQ('a', this).text(),10)-1) * oPaging.iLength;
+                                    opts._iDisplayStart = (parseInt($('a', this).text(),10)-1) * oPaging.iLength;
                                     fnDraw(opts);
                                 } );
                         }
 
                         // Add / remove disabled classes from the static elements
                         if (oPaging.iPage === 0) {
-                            JQ('li:first', an[i]).addClass('disabled');
+                            $('li:first', an[i]).addClass('disabled');
                         } else {
-                            JQ('li:first', an[i]).removeClass('disabled');
+                            $('li:first', an[i]).removeClass('disabled');
                         }
 
                         if (oPaging.iPage === oPaging.iTotalPages-1 || oPaging.iTotalPages === 0) {
-                            JQ('li:last', an[i]).addClass('disabled');
+                            $('li:last', an[i]).addClass('disabled');
                         } else {
-                            JQ('li:last', an[i]).removeClass('disabled');
+                            $('li:last', an[i]).removeClass('disabled');
                         }
                     }
                 }
@@ -38049,9 +38049,9 @@ KBVis.define('renderers/table',['jquery', 'underscore'],
          * TableTools Bootstrap compatibility
          * Required TableTools 2.1+
          */
-        if (JQ.fn.DataTable.TableTools) {
+        if ($.fn.DataTable.TableTools) {
             // Set the classes that TableTools uses to something suitable for Bootstrap
-            JQ.extend(true, JQ.fn.DataTable.TableTools.classes, {
+            $.extend(true, $.fn.DataTable.TableTools.classes, {
                 container: "DTTT btn-group",
                 buttons: {
                     normal: "btn",
@@ -38073,7 +38073,7 @@ KBVis.define('renderers/table',['jquery', 'underscore'],
             });
 
             // Have the collection use a bootstrap compatible dropdown
-            JQ.extend(true, JQ.fn.DataTable.TableTools.DEFAULTS.oTags, {
+            $.extend(true, $.fn.DataTable.TableTools.DEFAULTS.oTags, {
                 collection: {
                     container: "ul",
                     button: "li",
@@ -38085,7 +38085,7 @@ KBVis.define('renderers/table',['jquery', 'underscore'],
 
     return Table;
 });
-KBVis.define('charts/bar',['jquery', 'd3', 'underscore'], function (JQ, d3, _) {
+KBVis.define('charts/bar',['jquery', 'd3', 'underscore'], function ($, d3, _) {
     var defaults = {
         yTitle: 'Y Axis',
         axisLabelFontSize: 10,
@@ -38104,7 +38104,7 @@ KBVis.define('charts/bar',['jquery', 'd3', 'underscore'], function (JQ, d3, _) {
         var self = this;
         options = options ? _.clone(options) : {};
         _.defaults(options, defaults);
-        var $el = JQ(options.element);
+        var $el = $(options.element);
         var data;
         self.setData = function (inData) {
             if (typeof inData === "object") {
@@ -38538,7 +38538,7 @@ KBVis.define("colorbrewer", (function (global) {
     };
 }(this)));
 
-KBVis.define('charts/pie',['jquery', 'd3', 'colorbrewer'], function (JQ, d3, colorbrewer) {
+KBVis.define('charts/pie',['jquery', 'd3', 'colorbrewer'], function ($, d3, colorbrewer) {
     function PieChart(options) {
         var self = this;
         options = options ? _.clone(options) : {};
@@ -38546,7 +38546,7 @@ KBVis.define('charts/pie',['jquery', 'd3', 'colorbrewer'], function (JQ, d3, col
         options.categories = (options.categories || 9);
         options.colorscheme = (options.colorscheme || 'Spectral'); 
         
-        var $el = JQ(options.element);
+        var $el = $(options.element);
         var data;
         self.setData = function (inData) {
             data = inData;
@@ -40543,7 +40543,7 @@ KBVis.define("backbone", ["underscore","jquery"], (function (global) {
 
 }));
 
-KBVis.define('util/progress',['jquery', 'underscore', 'util/spin'], function (JQ, _, Spinner) {
+KBVis.define('util/progress',['jquery', 'underscore', 'util/spin'], function ($, _, Spinner) {
     var _BAR = "bar", _SPIN = "spin";
     var defaults = {
         fade: true,
@@ -40571,21 +40571,21 @@ KBVis.define('util/progress',['jquery', 'underscore', 'util/spin'], function (JQ
                 show: function (container) { spinner.spin(container[0]) },
                 hide: function () {
                     spinner.stop();
-                    if (options.fade) JQ("#" + id).remove();
+                    if (options.fade) $("#" + id).remove();
                 }
             };
         } else {
-            var div = JQ("<div>")
+            var div = $("<div>")
                 .addClass("progress progress-striped active")
                 .css("display", "none")
-                .append(JQ("<div>").addClass("bar")
+                .append($("<div>").addClass("bar")
                     .css("width", options.width));
             return {
                 show: function (container, message) {
                     container.append(div);
                     if (message) {
                         div.find("#progress-message").remove();
-                        div.append(JQ("<span>")
+                        div.append($("<span>")
                             .attr("id", "progress-message")
                             .text(message)
                         );
@@ -40594,7 +40594,7 @@ KBVis.define('util/progress',['jquery', 'underscore', 'util/spin'], function (JQ
                 },
                 hide: function () {
                     div.fadeOut(function () {
-                        if (options.fade) JQ("#" + id).remove();
+                        if (options.fade) $("#" + id).remove();
                     });
                 },
                 width: function (percent) {
@@ -40609,13 +40609,13 @@ KBVis.define('util/progress',['jquery', 'underscore', 'util/spin'], function (JQ
         _.defaults(options, defaults);
         _.defaults(options.spinner, spinnerDefaults);
         options.width = options.initialWidth;
-        var $el = JQ(options.element);
+        var $el = $(options.element);
         var _id = "progress-container-" + progressCounter;
         var indicator;
         this.show = function (message) {
             var container;
             if (options.fade) {
-                container = JQ("<div>")
+                container = $("<div>")
                     .attr("id", _id)
                     .css("z-index", options.zIndex)
                     .css("background-color", "rgba(100%, 100%, 100%, 0.8)")
@@ -40658,7 +40658,7 @@ KBVis.define('util/progress',['jquery', 'underscore', 'util/spin'], function (JQ
  */(function(a,b){typeof exports=="object"&&a.require?module.exports=b(require("underscore"),require("backbone")):typeof define=="function"&&define.amd?KBVis.define('backbone.localstorage',["underscore","backbone"],function(c,d){return b(c||a._,d||a.Backbone)}):b(_,Backbone)})(this,function(a,b){function c(){return((1+Math.random())*65536|0).toString(16).substring(1)}function d(){return c()+c()+"-"+c()+"-"+c()+"-"+c()+"-"+c()+c()+c()}return b.LocalStorage=window.Store=function(a){if(!this.localStorage)throw"Backbone.localStorage: Environment does not support localStorage.";this.name=a;var b=this.localStorage().getItem(this.name);this.records=b&&b.split(",")||[]},a.extend(b.LocalStorage.prototype,{save:function(){this.localStorage().setItem(this.name,this.records.join(","))},create:function(a){return a.id||(a.id=d(),a.set(a.idAttribute,a.id)),this.localStorage().setItem(this.name+"-"+a.id,JSON.stringify(a)),this.records.push(a.id.toString()),this.save(),this.find(a)},update:function(b){return this.localStorage().setItem(this.name+"-"+b.id,JSON.stringify(b)),a.include(this.records,b.id.toString())||this.records.push(b.id.toString()),this.save(),this.find(b)},find:function(a){return this.jsonData(this.localStorage().getItem(this.name+"-"+a.id))},findAll:function(){return(a.chain||a)(this.records).map(function(a){return this.jsonData(this.localStorage().getItem(this.name+"-"+a))},this).compact().value()},destroy:function(b){return b.isNew()?!1:(this.localStorage().removeItem(this.name+"-"+b.id),this.records=a.reject(this.records,function(a){return a===b.id.toString()}),this.save(),b)},localStorage:function(){return localStorage},jsonData:function(a){return a&&JSON.parse(a)},_clear:function(){var b=this.localStorage(),c=new RegExp("^"+this.name+"-");b.removeItem(this.name),(a.chain||a)(b).keys().filter(function(a){return c.test(a)}).each(function(a){b.removeItem(a)}),this.records.length=0},_storageSize:function(){return this.localStorage().length}}),b.LocalStorage.sync=window.Store.sync=b.localSync=function(a,c,d){var e=c.localStorage||c.collection.localStorage,f,g,h=b.$.Deferred&&b.$.Deferred();try{switch(a){case"read":f=c.id!=undefined?e.find(c):e.findAll();break;case"create":f=e.create(c);break;case"update":f=e.update(c);break;case"delete":f=e.destroy(c)}}catch(i){i.code===22&&e._storageSize()===0?g="Private browsing is unsupported":g=i.message}return f?(d&&d.success&&(b.VERSION==="0.9.10"?d.success(c,f,d):d.success(f)),h&&h.resolve(f)):(g=g?g:"Record Not Found",d&&d.error&&(b.VERSION==="0.9.10"?d.error(c,g,d):d.error(g)),h&&h.reject(g)),d&&d.complete&&d.complete(f),h&&h.promise()},b.ajaxSync=b.sync,b.getSyncMethod=function(a){return a.localStorage||a.collection&&a.collection.localStorage?b.localSync:b.ajaxSync},b.sync=function(a,c,d){return b.getSyncMethod(c).apply(this,[a,c,d])},b.LocalStorage});
 KBVis.define('util/dropdown',['jquery', 'backbone', 'underscore',
     'util/progress', 'backbone.localstorage'],
-function(JQ, Backbone, _, Progress) {
+function($, Backbone, _, Progress) {
     var defaults = {
         container:    "body",
         listTemplate: "#ddListTemplate",
@@ -40671,10 +40671,10 @@ function(JQ, Backbone, _, Progress) {
         var self = this;
         options = options ? _.clone(options) : {};
         _.defaults(options, defaults);
-        options.container    = JQ(options.container);
-        options.listTemplate = JQ(options.listTemplate);
-        options.itemTemplate = JQ(options.itemTemplate);
-        options.copyTemplate = JQ(options.copyTemplate);
+        options.container    = $(options.container);
+        options.listTemplate = $(options.listTemplate);
+        options.itemTemplate = $(options.itemTemplate);
+        options.copyTemplate = $(options.copyTemplate);
         options.parseItem = (options.parseItem || function (data, item) {
             item.id    = data[0];
             item.title = data[1];
@@ -40685,12 +40685,12 @@ function(JQ, Backbone, _, Progress) {
         
         if (!options.itemTemplate.html()) {
             options.itemTemplate =
-                JQ("<script>").attr("type", "text/template").html(
+                $("<script>").attr("type", "text/template").html(
                     '<a href="<%= link %>"><%= title %></a>'
                 );
         }
         if (!options.listTemplate.html()) {
-            options.listTemplate = JQ("<script>")
+            options.listTemplate = $("<script>")
                 .attr("type", "text/template").html(
                 '<li class="dropdown">' +
                 '<a class="dropdown-toggle" id="<%= label %>" ' +
@@ -40700,7 +40700,7 @@ function(JQ, Backbone, _, Progress) {
                 'role="menu" aria-labelledby="<%= label %>"></ul></li>');
         }
         if (!options.copyTemplate.html()) {
-            options.copyTemplate = JQ("<script>").attr("type", "text/template")
+            options.copyTemplate = $("<script>").attr("type", "text/template")
                 .html('<br/><small id="copy" class="muted"></small>');
         }
         var DDItem = Backbone.Model.extend({
@@ -40724,7 +40724,7 @@ function(JQ, Backbone, _, Progress) {
             selectItem: function () {
                 this.$el.parent().children().removeClass('active');
                 this.$el.addClass('active');
-                JQ(this.options.copyTarget).text(this.$el.text());
+                $(this.options.copyTarget).text(this.$el.text());
             },
             render: function() {
                 this.$el.append(this.template(this.model));
@@ -40742,15 +40742,15 @@ function(JQ, Backbone, _, Progress) {
             initialize: function() {
                 this.collection.bind("sync", this.renderItems, this);
                 if (this.options.copyTarget == null) {
-                    JQ("#" + this.options.label)
+                    $("#" + this.options.label)
                         .append(_.template(options.copyTemplate.html())());
                     this.options.copyTarget =
-                        JQ("#" + this.options.label).find("#copy");
+                        $("#" + this.options.label).find("#copy");
                 }
                 this.render();
             },
             render: function() {
-                this.container = JQ(this.template({
+                this.container = $(this.template({
                     label:  this.options.label,
                     listId: this.options.listId,
                     title:  this.options.title
@@ -40758,7 +40758,7 @@ function(JQ, Backbone, _, Progress) {
                 this.$el.append(this.container);
             },
             updateCopy: function (text) {
-                JQ(this.options.copyTarget).text(text);
+                $(this.options.copyTarget).text(text);
             },
             renderItems: function () {
                 var $topics = this.$el.find("#" + this.options.listId);
@@ -40774,7 +40774,7 @@ function(JQ, Backbone, _, Progress) {
                         $topics.append(itemView.render().el);
                     }, this);
                 } else {
-                    $topics.append(JQ("<li>")
+                    $topics.append($("<li>")
                         .css("padding", "5px")
                         .addClass("text-warning")
                         .text('No ' + this.options.name));
@@ -40864,7 +40864,7 @@ KBVis.define('util/syntax',[],function () {
 	    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
 	        var cls = 'number';
 	        if (/^"/.test(match)) {
-	            if (/:JQ/.test(match)) {
+	            if (/:$/.test(match)) {
 	                cls = 'key';
 	            } else {
 	                cls = 'string';
@@ -43271,7 +43271,7 @@ if (!jQuery) { throw new Error("Bootstrap requires jQuery") }
 KBVis.define("bootstrap", ["jquery"], function(){});
 
 KBVis.define('util/modal',["jquery", "underscore", "text!templates/modal.html", "bootstrap"],
-function (JQ, _, html) {
+function ($, _, html) {
     var defaults = {
         element: "body",
         z: 3000,
@@ -43292,7 +43292,7 @@ function (JQ, _, html) {
             options.contentId = options.id + "-content";
         }
         modalCounter++;
-        var modal = JQ(template(options));
+        var modal = $(template(options));
         var modalBody   = modal.find(".modal-body");
         var modalFooter = modal.find(".modal-footer");
         var modalHeader = modal.find(".modal-header");
@@ -43316,12 +43316,12 @@ function (JQ, _, html) {
             if (options.element === undefined) {
                 throw new Error("Nothing to which to append modal");
             }
-            JQ(options.element).append(modal);
+            $(options.element).append(modal);
             if (options.width)  {
                 dialog.width(options.width);
             }
             if (options.height) {
-                var top = (JQ("body").height() - options.height);
+                var top = ($("body").height() - options.height);
                 dialog.outerHeight(options.height);
                 modalBody.outerHeight(dialog.innerHeight()
                     - modalHeader.outerHeight()
@@ -43346,7 +43346,7 @@ KBVis.define('util/viewport',[
     "util/syntax",
     "util/modal",
     "jquery-ui"
-], function (JQ, _, Progress, Syntax, Modal) {
+], function ($, _, Progress, Syntax, Modal) {
     var viewportCounter = 1;
     var defaults = {
         height: 400,
@@ -43360,8 +43360,8 @@ KBVis.define('util/viewport',[
     };
     var MaximizeModal = new Modal({
         backdrop: true,
-        height: JQ("body").height() - 100,
-        width: JQ("body").width() - 100
+        height: $("body").height() - 100,
+        width: $("body").width() - 100
     });
     MaximizeModal.init();
     var ExportModal = new Modal({
@@ -43369,21 +43369,21 @@ KBVis.define('util/viewport',[
         contentId: "export-content"
     });
     ExportModal.footer(
-        JQ("<a>", { href: "#", download: "export.json" })
+        $("<a>", { href: "#", download: "export.json" })
             .addClass("btn btn-primary")
-            .append(JQ("<i>").addClass("icon-download-alt"))
+            .append($("<i>").addClass("icon-download-alt"))
             .append(" Download").click(function (e) {
                 e.preventDefault();
                 var uriContent =
                     "data:application/json," +
-                    encodeURIComponent(JQ("#export-content").text());
+                    encodeURIComponent($("#export-content").text());
                 window.open(uriContent, "export.json");
                 return false;
             }
         )
     );
     ExportModal.init();
-    JQ(".viewport")
+    $(".viewport")
         .attr('unselectable', 'on')
         .css('user-select', 'none')
         .on('selectstart', false);
@@ -43401,21 +43401,21 @@ KBVis.define('util/viewport',[
     function Viewport(options) {
         var self = this;
         options = options ? _.clone(options) : {};
-        options.parent = JQ(options.parent);
+        options.parent = $(options.parent);
         if (!options.height && options.parent.height() > 0)
             options.height = options.parent.height();
         _.defaults(options, defaults);
         options.id = options.id || ["viewport", viewportCounter].join("-");
         viewportCounter++;
         
-        var div = JQ("<div>")
+        var div = $("<div>")
             .addClass("viewport")
             .attr("data-title", options.title)
             .attr("id", options.id + "-wrapper")
             .css("min-height", options.height)
             .css("min-width", options.width);
         if (options.classes) { div.addClass(options.classes); }
-        var content = JQ("<div>")
+        var content = $("<div>")
             .addClass("viewport-content")
             .attr("id", options.id);
         content.progress = new Progress({ element: content });
@@ -43442,12 +43442,12 @@ KBVis.define('util/viewport',[
                     self.toolbox._isShown = false;
                     self.toolbox.hide('fast');
                 }).on("click", function (e) {
-                    JQ(this).find(".dropdown-menu").toggle();
+                    $(this).find(".dropdown-menu").toggle();
                     e.stopPropagation();
                 });
             }
             if (options.sortContainer !== null) {
-                var target = JQ(options.sortContainer);
+                var target = $(options.sortContainer);
                 target.sortable({
                     containment: target,
                     handle: ".drag-button",
@@ -43462,13 +43462,13 @@ KBVis.define('util/viewport',[
             params = params ? _.clone(params) : {};
             params.message = params.message || "Viewport error";
             content.empty();
-            content.append(JQ("<div>").addClass("alert alert-error")
-                .append(JQ("<h3>").text("Error"))
-                .append(JQ("<span>").html(params.message)));
+            content.append($("<div>").addClass("alert alert-error")
+                .append($("<h3>").text("Error"))
+                .append($("<span>").html(params.message)));
         };
         content.addTool = function (tool) {
             return self.toolbox.find("#viewport-toolbox").append(
-                JQ("<li>").append(tool)
+                $("<li>").append(tool)
             );
         };
         content.renderer = function (r) {
@@ -43480,25 +43480,25 @@ KBVis.define('util/viewport',[
         return content;
         
         function createToolbox(options) {
-            var div = JQ("<div>")
+            var div = $("<div>")
                 .addClass("viewport-toolbox btn-group btn-group-sm");
-            div.append(JQ("<div>").addClass("btn-group btn-group-sm")
-                .append(JQ("<a>", { href: "#", "data-toggle": "dropdown" })
+            div.append($("<div>").addClass("btn-group btn-group-sm")
+                .append($("<a>", { href: "#", "data-toggle": "dropdown" })
                     .addClass("btn btn-default")
-                    .html(JQ("<i>", { class: "icon icon-cog" }))
+                    .html($("<i>", { class: "icon icon-cog" }))
                     .dropdown()
-                ).append(JQ("<ul>", {
+                ).append($("<ul>", {
                     id: "viewport-toolbox",
                     class: "dropdown-menu"
-                }).append(JQ("<li>")
-                    .append(JQ("<a>", { href: "#" + window.location.hash })
-                        .html(JQ("<i>", { class: "icon icon-download-alt" })
+                }).append($("<li>")
+                    .append($("<a>", { href: "#" + window.location.hash })
+                        .html($("<i>", { class: "icon icon-download-alt" })
                             .append(" Export data")))
                     .click(function (event) {
                         event.preventDefault();
                         if (self.renderer === null) { return; }
                         var exportData = Syntax(self.renderer.getData());
-                        JQ("#export-content").empty().append(JQ("<pre>")
+                        $("#export-content").empty().append($("<pre>")
                             .html(exportData)
                         );
                         ExportModal.show();
@@ -43507,15 +43507,15 @@ KBVis.define('util/viewport',[
                 )
             );
             if (options.maximize) {
-                div.append(JQ("<div>", { id: "btn-maximize" })
+                div.append($("<div>", { id: "btn-maximize" })
                     .addClass("btn btn-default")
-                    .html(JQ("<i>", { class: "icon-resize-full" }))
+                    .html($("<i>", { class: "icon-resize-full" }))
                     .click(toggleMaximize));
             }
             if (options.sortContainer !== null) {
-                div.append(JQ("<div>")
+                div.append($("<div>")
                     .addClass("btn btn-default drag-button")
-                    .html(JQ("<i>", { class: "icon-move" })));
+                    .html($("<i>", { class: "icon-move" })));
             }
             return div;
         }
@@ -43553,8 +43553,8 @@ KBVis.define('util/viewport',[
 });
 KBVis.define('text!templates/slider.html',[],function () { return '<div class="slider-container">\n    <div class="slider-label"></div>\n    <div class="slider-pad">\n        <div class="slider"></div>\n    </slider>\n</div>';});
 
-KBVis.define('util/slider',["jquery", "underscore", "text!templates/slider.html"],
-function (JQ, _, template) {
+KBVis.define('util/slider',["underscore", "text!templates/slider.html"],
+function (_, template) {
     
     var defaults = {
         title: null,
@@ -43585,9 +43585,9 @@ function (JQ, _, template) {
             self.$wrapper.find(".tooltip-inner").text(tiptext());
         }
         options.slide = onSlide;
-        self.$wrapper = JQ(_.template(template, options));
+        self.$wrapper = $(_.template(template, options));
         if (options.element !== undefined) {
-            JQ(options.element).append(self.$wrapper);
+            $(options.element).append(self.$wrapper);
         }
         self.$wrapper.find(".slider-label").append(options.label);
         self.$slider = self.$wrapper.find(".slider");
