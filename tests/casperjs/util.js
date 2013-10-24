@@ -9,6 +9,13 @@ casper.get_notebook_server = function () {
     return 'http://127.0.0.1:' + port
 };
 
+casper.login_user = function() {
+    var baseUrl = this.get_notebook_server();
+
+};
+
+
+
 // Create and open a new notebook.
 casper.open_new_notebook = function () {
     var baseUrl = this.get_notebook_server();
