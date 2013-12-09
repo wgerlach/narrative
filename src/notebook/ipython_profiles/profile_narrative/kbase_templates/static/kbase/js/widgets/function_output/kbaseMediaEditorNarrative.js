@@ -5,7 +5,8 @@ $.KBWidget({
     version: "1.0.0",
     options: {
         viewOnly: true,
-        editOnly: false
+        editOnly: false,
+        mediaData: null,
     },
     init: function(options) {
         this._super(options);
@@ -25,7 +26,7 @@ $.KBWidget({
         self.$elem.append(container);
 
         container.append('<p class="muted loader-rxn"> \
-                <img src="assets/img/ajax-loader.gif"> loading...</p>')
+                <img src="../../images/ajax-loader.gif"> loading...</p>')
 
         /** Cases:
          * 1. viewOnly
@@ -40,16 +41,52 @@ $.KBWidget({
 
 
         var mediaData = [];
-        if (options.mediaData)
-            mediaData = options.mediaData[0];
+        if (!options.mediaData && media) {
 
-        if (editOnly)
-            media_view_editable(container, mediaData);
-        else
-            media_view(container, mediaData);
+            // fba.get_media({
+            //     medias: [media],
+            //     workspaces: [ws],
+            //     auth: token
+            // },
+            // function(data) {
+            //     media = data[0];
+            //     console.log("data returned");
+            //     console.log(data);
+
+            //     if (editOnly)
+            //         media_view_editable(container, media);
+            //     else
+            //         media_view(container, media);
+            // },
+            // function(error) {
+            //     console.debug(error);
+            // });
+
+
+
+            var mediaAJAX = fba.get_media({medias: [media], workspaces: [ws], auth: token});
+            $.when(mediaAJAX).done(function(data){
+                media = data[0]; // only 1 media right now
+                if (editOnly)
+                    media_view_editable(container, media);
+                else
+                    media_view(container, media);
+            })
+        }
+        else {
+            var mediaData = {};
+            if (options.mediaData)
+                mediaData = options.mediaData[0];
+
+            if (editOnly)
+                media_view_editable(container, mediaData);
+            else
+                media_view(container, mediaData);
+        }
 
 
         function media_view(container, data) {
+            console.log("here");
             container.find('.loader-rxn').remove();
 
             container.append('<b>Name: </b>'+data.id+'&nbsp;&nbsp;&nbsp;<b>pH: </b>'+data.pH);
@@ -191,6 +228,14 @@ $.KBWidget({
                     maxflux[i] = $(maxfluxDivs[i]).val();
                 }
 
+                var plusCpd = $("#" + randId + "addCmpds").val();
+                if (plusCpd) {
+                    cmpds.push(plusCpd);
+                    conc.push($("#" + randId + "addConc").val());
+                    minflux.push($("#" + randId + "addMinFlux").val());
+                    maxflux.push($("#" + randId + "addMaxFlux").val());
+                }
+
                 // typedef structure {
                 //     media_id media;
                 //     workspace_id workspace;
@@ -224,10 +269,21 @@ $.KBWidget({
                 $savePanel.html("Saving...");
                 $savePanel.css({"display":"inline"});
 
-                var saveAJAX = fba.addmedia(newMedia);
-                $.when(saveAJAX).done(function(data){
-                    $savePanel.html("Done!");
-                });
+                fba.addmedia_async(newMedia,
+                    function(metadata) {
+                        $savePanel.html("Done!");
+                    },
+                    function(error) {
+                        $savePanel.css({"display":"none"});
+                        $errorPanel.html("Error while saving.");
+                        $errorPanel.css({"display":"inline"});
+                        console.log(error);                        
+                    });
+
+                // var saveAJAX = fba.addmedia_async(newMedia);
+                // $.when(saveAJAX).done(function(data){
+                //     $savePanel.html("Done!");
+                // });
                 // fba.addmedia(newMedia, function(metadata) {
                 // },
                 // function(error) {
@@ -259,8 +315,8 @@ $.KBWidget({
                     type: 'unknown',
                     compounds: [cmpds],
                     concentrations: [conc],
-                    maxflux: [minflux],
-                    minflux: [maxflux]
+                    maxflux: [maxflux],
+                    minflux: [minflux]
 
                 };
                 container.append('<div id="save-to-ws"></div>')

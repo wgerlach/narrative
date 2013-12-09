@@ -1,16 +1,13 @@
 __version__ = '0.1'
 
 ## Imports
-import json
 import os
-import logging
 import sys
-import time
-import uuid
 
 # KBase packages
 from biokbase.workspaceService.Client import workspaceService
 from biokbase.InvocationService.Client import InvocationService
+from biokbase.narrative.common import service
 
 class URLS:
     workspace= "http://kbase.us/services/workspace"
@@ -96,11 +93,13 @@ def run(params):
     if (out_genome):
         genome = out_genome
 
-    job_return = "Annotation job submitted successfully!<br/>" + job_info[1] + "<br/>"
-    job_return += "This job will take approximately an hour.<br/>"
-    job_return += "Your annotated genome will have ID: <b>" + genome + "</b><br/>"
+    job_id = job_info[1].strip()
 
-    print job_return
+    job_return = ("Annotation job submitted successfully!<br/>" + job_id + "<br/>"
+                  "This job will take approximately an hour.<br/>"
+                  "Your annotated genome will have ID: <b>" + genome + "</b><br/>")
+
+    print "append($(\"<div>" + job_return + "</div>\"));"
     return 0
 
 if __name__ == '__main__':

@@ -6,7 +6,7 @@
  * like the CDS and local files.
  *
  * Options:
-*    workspaceURL - the location of the workspace service (default points to existing deployed service)
+ *    workspaceURL - the location of the workspace service (default points to existing deployed service)
  *    loadingImage - an image to show in the middle of the widget while loading data
  *    tableElem - HTML element container for the data table
  *    controlsElem - HTML element container for the controls (search/add)
@@ -16,20 +16,27 @@
     $.KBWidget({
         name: "kbaseNarrativeWorkspace", 
         parent: "kbaseWidget",
-		version: "1.0.0",
-		uploadWidget: 'x',
+        version: "1.0.0",
+        uploadWidget: 'x',
         dataTableWidget: 'y',
-		options: {
-            workspaceURL: "https://www.kbase.us/services/workspace",            
-			loadingImage: "",
+        options: {
+            workspaceURL: "https://www.kbase.us/services/workspace",
+            loadingImage: "",
             tableElem: null,
             controlsElem: null
-		},
+        },
         ws_client: null,
         ws_id: null,
 
-		init: function(options) {
-			this._super(options);
+        init: function(options) {
+            this._super(options);
+
+            var self = this;
+            $([IPython.events]).on('notebook_loaded.Notebook', function() {
+                self.rebindRunButtons();
+            });
+
+
             this.initDataTable(options.tableElem);
             this.initControls(options.controlsElem);
             // bind search to data table
@@ -42,8 +49,9 @@
             });
             this.initFuncs();
             this.render();
-			return this;
-		},
+            return this;
+        },
+        
         /**
          * Initialize controls at top of workspace view.
          *
@@ -85,6 +93,22 @@
                         ws_parent: this};
             this.uploadWidget_dlg = $dlg //$dlg.kbaseUploadWidget;
             this.uploadWidget_opts = opts;
+            // Add a 'refresh' button, bound to this widget's render() function
+            var $refresh = $('<button>')
+                .addClass('btn btn-default btn-sm')
+                .attr({'type': 'button', 'id': 'kb-ws-refresh'});
+                //.text("Refresh");
+            // XXX: BS-3 glyphicons aren't working
+            //$refresh.append($('<span>').addClass("glyphicon glyphicon-refresh"));
+            $refresh.append($('<i>').addClass('icon-refresh'));
+            elem.append($refresh);
+            var self = this;
+            elem.on('click', function(e) {
+                console.debug("refresh.begin");
+                self.render();
+                console.debug("refresh.end");
+            });
+            // done
             console.debug('initControls.end');
             return this;
         },
@@ -143,623 +167,232 @@
          * attribute in the HTML that is hard-coded into notebook.html
          * under $('div.kb-function-body ul').
          */
-
         addCellForFunction: function(name) {
             var env = this;
-            console.debug("adding cell for " + name);
             var nb = IPython.notebook;
             this.kernel = nb.kernel; // stash current kernel
-            var cell = nb.insert_cell_at_bottom('markdown');
+            var cell = nb.insert_cell_below('markdown');
+
+            cell.metadata['kb-cell'] = 'function';
+
             this._cur_index = nb.ncells() - 1; // stash cell's index
-            var command_builder = undefined;
-            var config = {};
-            var runner = this._runner(); 
-            var funcs = this._getFunctionsForFunction(name);
 
-            this.result_handler = funcs.result_handler;
-            config = funcs.config;
-            command_builder = funcs.command_builder;
-
+            var config = this._getFunctionConfig(name);
             var content = this._buildRunForm(name, config);
             var cell_id = "kb-cell-" + this._cur_index;
-            console.log(content);
+
+            // add buttons
+            content += "<div class='buttons pull-right' style='margin-top:10px'>" +
+                           "<button id='" + cell_id + "-delete' type='button' value='Delete' class='btn btn-warning'>Delete</button> " +
+                           "<button id='" + cell_id + "-run' type='button' value='Run' class='btn btn-primary'>Run</button>" + 
+                       "</div>";
+
+            // build progress bar and message (initially display:none)
+            var progressBar = "<div id='kb-func-progress' style='display:none;'>" +
+                                "<div class='progress progress-striped active kb-cell-progressbar'>" +
+                                    "<div class='progress-bar progress-bar-success' role='progressbar' aria-valuenow='0' " +
+                                    "aria-valuemin='0' aria-valuemax='100' style='width:0%'/>" +
+                                "</div>" +
+                                "<p class='text-success'/>" +
+                              "</div>";
+
             cell.set_text("<div class='kb-cell-run' " + "id='" + cell_id + "'>" + 
-                          "<h1>" + name + "</h1>" +
-                          "<div class='kb-cell-params'>" +  
-                          content + 
-                          "</div>" +
+                              "<h1>" + name + "</h1>" +
+                              "<div class='kb-cell-params'>" +  
+                                  content + 
+                              "</div>" +
+                              progressBar +
                           "</div>");
 
             cell.rendered = false; // force a render
             cell.render();
-            this.element = $("#" + cell_id);
-            var $frm = $('div#' + cell_id + ' form');
-            var submit_fn = this._bindRunButton();
-            $frm.on("submit", submit_fn);
+
+            this._removeCellEditFunction(cell);
+            this._bindActionButtons(cell);
         },
 
-         // yes, I know - ugh.
-        _getFunctionsForFunction: function(name) {
-            console.debug("Find custom functions for: " + name);
+        /**
+         * @method _removeCellEditFunction
+         * Removes the ability to edit a markdown cell by double-clicking or pressing Enter.
+         * Handy for dealing with KBase function or output cells.
+         * @param cell - the cell to modify.
+         * @private
+         */
+        _removeCellEditFunction: function(cell) {
+            // remove its double-click and return functions. sneaky!
+            $(cell.element).off('dblclick');
+            $(cell.element).off('keydown');
+        },
+
+        /**
+         * @method _bindActionButtons
+         * Binds the action (delete and run) buttons of a function cell.
+         * This requires the cell to have {'kb-cell' : 'function'} in its metadata, otherwise it's ignored.
+         * @param cell - the IPython Notebook cell with buttons to be bound.
+         * @private
+         */
+        _bindActionButtons: function(cell) {
+            // get the cell.
+            // look for the two buttons.
+            // bind them to the right actions.
+            if (!cell.metadata || !cell.metadata['kb-cell'] || cell.metadata['kb-cell'] !== 'function')
+                return;
+
+            $(cell.element).find(".buttons [id*=delete]").off('click');
+            $(cell.element).find(".buttons [id*=delete]").click(this._bindDeleteButton());
+            $(cell.element).find(".buttons [id*=run]").off('click');
+            $(cell.element).find(".buttons [id*=run]").click(this._bindRunButton());
+        },
+
+        /**
+         * @method _getFunctionConfig
+         * Yeah, I know. It's still ugly as sin. This all needs to be moved into a Kernel query that happens
+         * on startup. But for now, it's functional.
+         * @private
+         * @return the configuration for a function from its name.
+         */
+        _getFunctionConfig: function(name) {
             switch(name) {
-                // To add a new function, you need to define
-                // one JSON structure for params, and one function
-                // to build the actual command.
-                case 'plants':
-                    return {
-                        // configuration for parameters
-                        'config': this.plantsRunConfig,
-                        // function to build the code which is executed
-                        'command_builder': this.plantsRunCommand(),
-                        // function to handle the result data
-                        'result_handler': this.plantsCreateOutput
-                    }
+                case 'Plants Co-expression':
+                    return this.plantsRunConfig;
                     break;
 
                 case 'Assemble Contigs':
-                    return {
-                        'config' : this.runAssemblyConfig,
-                        'command_builder' : this.runAssemblyCommand(),
-                        'result_handler' : this.runAssemblyCreateOutput,
-                    }
+                    return this.runAssemblyConfig;
                     break;
 
                 case 'Assemble Genome':
-                    return {
-                        'config' : this.assembleGenomeConfig,
-                        'command_builder' : this.assembleGenomeCommand(),
-                        'result_handler' : this.assembleGenomeCreateOutput,
-                    }
+                    return this.assembleGenomeConfig;
                     break;
 
                 case 'Annotate Genome':
-                    return {
-                        'config' : this.annotateGenomeConfig,
-                        'command_builder' : this.annotateGenomeCommand(),
-                        'result_handler' : this.annotateGenomeCreateOutput,
-                    };
+                    return this.annotateGenomeConfig;
                     break;
 
                 case 'View Genome Details':
-                    return {
-                        'config' : this.viewGenomeConfig,
-                        'command_builder' : this.viewGenomeCommand(),
-                        'result_handler' : this.viewGenomeCreateOutput,
-                    };
+                    return this.viewGenomeConfig;
                     break;
 
                 case 'Genome To Draft FBA Model':
-                    return {
-                        'config' : this.genomeToFbaConfig,
-                        'command_builder' : this.genomeToFbaCommand(),
-                        'result_handler' : this.genomeToFbaCreateOutput,
-                    };
+                    return this.genomeToFbaConfig;
                     break;
 
                 case 'View FBA Model Details':
-                    return {
-                        'config' : this.viewFbaModelConfig,
-                        'command_builder' : this.viewFbaModelCommand(),
-                        'result_handler' : this.viewFbaModelCreateOutput,
-                    };
+                    return this.viewFbaModelConfig;
                     break;
 
                 case 'Build Media':
-                    return {
-                        'config' : this.buildMediaConfig,
-                        'command_builder' : this.buildMediaCommand(),
-                        'result_handler' : this.buildMediaCreateOutput,
-                    };
+                    return this.buildMediaConfig;
                     break;
 
                 case 'View Media':
-                    return {
-                        'config' : this.viewMediaConfig,
-                        'command_builder' : this.viewMediaCommand(),
-                        'result_handler' : this.viewMediaCreateOutput,
-                    };
+                    return this.viewMediaConfig;
                     break;
 
                 case 'Run Flux Balance Analysis':
-                    return {
-                        'config' : this.runFbaConfig,
-                        'command_builder' : this.runFbaCommand(),
-                        'result_handler' : this.runFbaCreateOutput,
-                    };
+                    return this.runFbaConfig;
                     break;
 
                 case 'View FBA Results':
-                    return {
-                        'config' : this.viewFbaConfig,
-                        'command_builder' : this.viewFbaCommand(),
-                        'result_handler' : this.viewFbaCreateOutput,
-                    };
+                    return this.viewFbaConfig;
                     break;
 
-                case 'Gapfill FBA Model':
-                    return {
-                        'config' : this.runGapfillConfig,
-                        'command_builder' : this.runGapfillCommand(),
-                        'result_handler' : this.runGapfillCreateOutput,
-                    };
+               case 'Gapfill FBA Model':
+                    return this.runGapfillConfig;
                     break;
 
                 case 'Integrate Gapfill Solution':
-                    console.log('Integrate Gapfill Solution');
-                    return {
-                        'config' : this.integrateGapfillConfig,
-                        'command_builder' : this.integrateGapfillCommand(),
-                        'result_handler' : this.runGapfillCreateOutput,
-                    };
+                    return this.integrateGapfillConfig;
                     break;
 
                 default:
-                    return {};
+                    return { params : {}, command : {module: '', function: ''}};
             }
         },
 
+        /**
+         * @method _bindDeleteButton
+         * @private
+         */
+        _bindDeleteButton: function() {
+            var self = this;
+            return( 
+                function(event) {
+                    event.preventDefault();
+                    var idx = IPython.notebook.get_selected_index();
+                    console.log("deleting selected cell: " + idx);
+                    IPython.notebook.delete_cell(idx);
+                }
+            );
+        },
+
+        /**
+         * @method _bindRunButton
+         * @private
+         */
         _bindRunButton: function() {
             var self = this;
-            return (function(event) {
-                event.preventDefault();
-                var params = {};
-                // extract params from form
-                $.each($(this)[0], function(key, field) {
-                    var full_name = field.name;
-                    var value = field.value;
-                    //console.debug("field " + key + ": " + full_name + "=" + value);
-                    switch(full_name) {
-                        case "":
-                            break;
-                        default:
-                            params[full_name] = value;
-                    }
-                });
-                var name = params['kbfunc'];
-                var funcs = self._getFunctionsForFunction(name);
-                console.debug("Run fn(" + name + ") with params", params);
-                self._runner()(funcs.command_builder(params));
-            });
+            return (
+                function(event) {
+                    event.preventDefault();
+                    var params = {};
+                    // extract params from form
+                    var cell = IPython.notebook.get_selected_cell();
+
+                    /* Each function cell has a form, containing inputs.
+                     * The selector below finds all children of the form, and filters them down to
+                     * just "form inputs" - input, select, textarea, text, etc.
+                     * the ':input' filter is a special jQuery thingy that lets this happen.
+                     */
+                    $(cell.element).find("form *").filter(":input").each(function(key, field) {
+                        if (field.name && field.name.length > 0)
+                            params[field.name] = field.value;
+                    });
+
+                    // Build the IPython function call.
+                    var name = params['kbfunc'];
+                    var command = self._getFunctionConfig(name).command;
+
+                    console.debug("Run fn(" + name + ") with params", params);
+                    self._runner()(cell, command, params);
+                }
+            );
         },
 
-        // Rebind all the run buttons to their original function
-        rebindRunButtons: function() {
-            var self = this;
-            $.each($('div.kb-cell-run form'), function(key, element) {
-                console.debug("rebind run button to element:", this);
-                var submit_fn = self._bindRunButton();
-                $(element).on("submit", submit_fn);
-            });
-        },
-
-        /* -------------- PLANTS ---------------------- */
-        /** 
-         * Input data for plants demo.
-         */
-        plantsRunConfig: {
-            'Identifiers': {
-                'Genome': '3899',
-                //'Ontology': 'PO:0001016'
-                'Ontology': 'GSE5622'
-            },
-            'Filter': {
-                //'-m': 'anova',
-                '-n': '100',
-                //'p-value': '0.00005',
-                '':'x',
-            },
-            'Network': {
-                'Pearson cutoff': '0.50',
-                '':'x'
-            },
-            'Cluster': {
-                //'-c': 'hclust',
-                //'-n': 'simple'
-                'Number of modules': '5',
-                '':'x'
-            }
-        },
         /**
-         * Run plants demo on backend.
-         * Closure is used to get proper context.
+         * @method rebindRunButtons
+         * Rebinds all the run buttons to their original function.
+         * This iterates over all cells, looking for a 'kb-cell' field in its metadata.
+         * If it finds it, it removes the double-click and keyboard-enter abilities from the cell.
+         * If that 'kb-cell' field === 'function', it rebinds the delete and run buttons as well.
+         *
+         * @public
          */
-        plantsRunCommand: function() {
-            var self = this;
-            return function(params) {
-                return self._buildRunCommand("biokbase.narrative.demo.coex_workflow",
-                        "coex_network_ws", params);
-                
-            }
-        },
-        /** 
-         * Create the output of the demo in the area given by 'element'.
-         */
-        plantsCreateOutput: function(element, text) {
-            // Since we must be done running, allow Run button to work again
-            this.rebindRunButtons();
-            // Now create output
-            var oid = text.trim();
-            var token = $("#login-widget").kbaseLogin("session","token");
-            var full_id = this.ws_id + "." + oid;
-            console.debug("ForceDirectedNetwork ID = "+full_id);
-            element.ForceDirectedNetwork({
-                workspaceID: this.ws_id + "." + oid,
-                token: token
-            });
-            // Make the element a little bigger
-            element.css({margin: '-10px'});
-            // Disable most actions on this element
-            element.off('click dblclick keydown keyup keypress focus');
-        },
+        rebindRunButtons: function() {
+            if (!(IPython && IPython.notebook))
+                return;
+            
+            console.debug("rebindRunButtons.begin");
+            // Rewrite the following to iterate using the IPython cell
+            // based methods instead of DOM objects
 
-        /* -------------- END: PLANTS ---------------------- */
+            var cells = IPython.notebook.get_cells();
+            console.log(cells);
 
-
-
-        /* -------------- MICROBES ---------------- */
-
-        /* --------- Assemble Contigs from FASTA reads -----------*/
-        runAssemblyConfig: {
-            'Identifiers' : {
-                'Paired-End Files<br>(comma-delimited)': '',
-                'Single-End Files<br>(comma-delimited)': '',
-                'Sequence Files<br>(comma-delimited)': '',
-            },
-            'Assembly Params' : {
-                'Assemblers' : '',
-                'Reference' : '',
-                'Notes' : '',
-            },
-            'Output' : {
-                'Contig Set Name' : ''
-            }
-        },
-
-        runAssemblyCommand: function() {
-            var self = this;
-            return function(params) {
-                return self._buildRunCommand("biokbase.narrative.demo.microbes_workflow", 
-                    "run_assembly", params);
-            };
-        },
-
-        runAssemblyCreateOutput: function(element, text) {
-            var jobId = "";
-            for (var i=0; i<5; i++) {
-                jobId += Math.floor((Math.random()*10));
-            }
-            var outText = "Your contig assembly job has been submitted successfully.<br/>" +
-                          "Your job ID is <b>job." + jobId + "</b><br/>" + 
-                          "This will likely take a few hours.<br/>" +
-                          "When complete, your ContigSet will have ID <b>" + text + "</b>";
-
-            element.append(outText);
-        },
-
-        /* ---------- Assemble Genome from Contigs ----------- */
-        assembleGenomeConfig: {
-            'Identifiers' : {
-                'Contig Set' : '',
-            },
-
-            'Output' : {
-                'New Genome' : '',
+            // not using $.each because its namespacing kinda screws things up.
+            for (var i=0; i<cells.length; i++) {
+                var cell = cells[i];
+                var cellType = cell.metadata['kb-cell'];
+                if (cellType) {
+                    this._removeCellEditFunction(cell);
+                    if (cellType == 'function') {
+                        this._bindActionButtons(cell);
+                    }
+                }                
             }
 
+            console.debug("rebindRunButtons.end");
         },
-
-        assembleGenomeCommand: function() {
-            var self = this;
-            return function(params) {
-                return self._buildRunCommand("biokbase.narrative.demo.microbes_workflow", 
-                    "assemble_genome", params);
-            };
-        },
-
-        assembleGenomeCreateOutput: function(element, text) {
-            var data = JSON.parse(text);
-
-            var tableRow = function(a, b) {
-                return $("<tr>")
-                       .append("<td>" + a + "</td>")
-                       .append("<td>" + b + "</td>");
-            };
-
-            var $metaTable = $("<table>")
-                             .addClass("table table-striped table-bordered")
-                             .css({"margin-left":"auto", "margin-right":"auto", "width":"100%"})
-                             .append(tableRow("<b>ID</b>", "<b>" + data[0] + "</b>"))
-                             .append(tableRow("Scientific Name", data[10].scientific_name))
-                             .append(tableRow("Size", data[10].size))
-                             .append(tableRow("GC Content", (100*(data[10].gc)).toFixed(2) + "%"))
-                             .append(tableRow("Location", data[7]));
-
-            element.append($metaTable);
-
-        },
-
-        /* ---------- Annotate Assembled Genome ----------- */
-        annotateGenomeConfig: {
-            'Identifiers' : {
-                'Genome' : '',
-            },
-            'Output' : {
-                'New Genome ID (optional)': '',
-            },
-
-        },
-
-        annotateGenomeCommand: function() {
-            var self = this;
-            return function(params) {
-                return self._buildRunCommand("biokbase.narrative.demo.microbes_workflow", 
-                    "annotate_genome", params);
-            };
-        },
-
-        annotateGenomeCreateOutput: function(element, text) {
-            element.append(text);
-        },
-
-        /* ---------- View Genome Details ----------- */
-        viewGenomeConfig: {
-            'Identifiers' : {
-                'Genome' : '',
-            },
-
-        },
-
-        viewGenomeCommand: function() {
-            var self = this;
-            return function(params) {
-                return self._buildRunCommand("biokbase.narrative.demo.microbes_workflow", 
-                    "view_genome_details", params);
-            };
-        },
-
-        viewGenomeCreateOutput: function(element, text) {
-            var data = JSON.parse(text);
-
-            var tableRow = function(a, b) {
-                return $("<tr>")
-                       .append("<td>" + a + "</td>")
-                       .append("<td>" + b + "</td>");
-            };
-
-            var calcGC = function(gc, total) {
-                if (gc > 1)
-                    gc = gc/total;
-                return (100*gc).toFixed(2);
-            };
-
-            console.log(data);
-
-            var $metaTable = $("<table>")
-                             .addClass("table table-striped table-bordered")
-                             .css({"margin-left":"auto", "margin-right":"auto", "width":"100%"})
-                             .append(tableRow("<b>ID</b>", "<b>" + data[0] + "</b>"))
-                             .append(tableRow("Scientific Name", data[10].scientific_name))
-                             .append(tableRow("Size", data[10].size + " bp"))
-                             .append(tableRow("GC Content", calcGC(data[10].gc, data[10].size) + "%"))
-                             .append(tableRow("Number Features", data[10].number_features))
-                             .append(tableRow("Location", data[7]));
-
-            element.append($metaTable);
-
-        },
-
-        /* ------------ Genome to FBA Model ----------------- */ 
-        genomeToFbaConfig: {
-            'Identifiers': {
-                'Genome': '',
-            },
-    // -m --model         Name to be provided for output model
-    // --genomews         Workspace where genome is located
-    // --templateid       ID of template model to use
-    // --templatews       Workspace with template model
-    // --core             Build core model
-    // -w --workspace     Reference default workspace
-    // -o --overwrite     Overwrite any existing model with same name
-    // -e --showerror     Set as 1 to show any errors in execution
-    // -v --verbose       Print verbose messages
-    // -? -h --help       Print this usage information
-        },
-
-        genomeToFbaCommand: function() {
-            var self = this;
-            return function(params) {
-                return self._buildRunCommand("biokbase.narrative.demo.microbes_workflow", 
-                    "genome_to_fba_model", params);
-            };
-        },
-
-        genomeToFbaCreateOutput: function(element, text) {
-            var data = JSON.parse(text);
-
-            element.kbaseModelMetaNarrative({data: data});
-            element.off('click dblclick keydown keyup keypress focus');
-        },
-
-        /* ---------- View Model ----------- */
-        viewFbaModelConfig: {
-            'Identifiers': {
-                'Model': '',
-            },
-        },
-
-        viewFbaModelCommand: function() {
-            var self = this;
-            return function(params) {
-                return self._buildRunCommand("biokbase.narrative.demo.microbes_workflow", 
-                    "view_fba_model", params);
-            };
-        },
-
-        viewFbaModelCreateOutput: function(element, text) {
-            var data = JSON.parse(text);
-
-            console.log(data);
-            element.kbaseModelTabs({modelsData: data});
-
-
-            element.css({ margin: '-10px' });
-            element.off('click dblclick keydown keyup keypress focus');
-        },
-
-
-        /* --------- Build Media ------------ */
-        buildMediaConfig: {
-            'Identifiers' : {
-                'Base Media (optional)' : '',
-            },
-        },
-
-        buildMediaCommand: function() {
-            var self = this;
-            return function(params) {
-                return self._buildRunCommand("biokbase.narrative.demo.microbes_workflow", 
-                    "build_media", params);
-            };
-        },
-
-        buildMediaCreateOutput: function(element, text) {
-            var data = null;
-            if (text !== "null") {
-                data = JSON.parse(text);
-            }
-
-            element.kbaseMediaEditorNarrative({ mediaData: data, viewOnly: false, editOnly: true, ws: this.ws_id, auth: this.ws_auth });
-
-        },
-
-        /* ---------- View Media ---------- */
-        viewMediaConfig: {
-            'Identifiers' : {
-                'Media' : '',
-            },
-        },
-
-        viewMediaCommand: function() {
-            var self = this;
-            return function(params) {
-                return self._buildRunCommand("biokbase.narrative.demo.microbes_workflow", 
-                    "view_media", params);
-            };
-        },
-
-        viewMediaCreateOutput: function(element, text) {
-            var data = JSON.parse(text);
-            element.kbaseMediaEditorNarrative({ mediaData: data });
-        },
-
-
-        /* --------- Run Flux Balance Analysis --------------- */
-        runFbaConfig: {
-            'Identifiers' : {
-                'Model' : '',
-                'Media' : '',
-            },
-            'Misc' : {
-                'Notes' : '',
-            },
-        },
-
-        runFbaCommand: function() {
-            var self = this;
-            return function(params) {
-                return self._buildRunCommand("biokbase.narrative.demo.microbes_workflow", "run_fba", params);
-            };
-        },
-
-        runFbaCreateOutput: function(element, text) {
-            var data = JSON.parse(text);
-            element.kbaseFbaTabsNarrative({ fbaData: data });
-        },
-
-
-        /* ------------ View FBA Results ------------ */
-
-        viewFbaConfig: {
-            'Identifiers' : {
-                'FBA Result' : '',
-            },
-        },
-
-        viewFbaCommand: function() {
-            var self = this;
-            return function(params) {
-                return self._buildRunCommand("biokbase.narrative.demo.microbes_workflow", "view_fba", params);
-            };
-        },
-
-        viewFbaCreateOutput: function(element, text) {
-            var data = JSON.parse(text);
-            console.log(data); 
-            element.kbaseFbaTabsNarrative({ fbaData: data });
-        },
-
-        /* ------------ Gapfill FBA Model -------------- */
-        runGapfillConfig: {
-            'Identifiers' : {
-                'Model' : '',
-                'Media' : '',
-            },
-            'Solutions' : {
-                'Number to seek' : '1',
-            },
-            'Time' : {
-                'Per Solution (sec)' : '3600',
-                'Total Limit (sec)' : '3600'
-            }
-        },
-
-        runGapfillCommand: function() {
-            var self = this;
-            return function(params) {
-                return self._buildRunCommand("biokbase.narrative.demo.microbes_workflow", "run_gapfill", params);
-            };
-        },
-
-        runGapfillCreateOutput: function(element, text) {
-            var data = JSON.parse(text);
-            var jobId = data.id;
-            var totalTime = data.jobdata.postprocess_args[0].totalTimeLimit;
-            var totalTimeHrs = totalTime/3600;
-            var outModel = data.jobdata.postprocess_args[0].out_model;
-
-            var outputText = "<div>Your gapfill job has been successfully queued, with job ID: <b>" + jobId + "</b>.<br/>" +
-                             "This will take approximately " + totalTime + " seconds (" + totalTimeHrs + " hour" +
-                             (totalTimeHrs === 1 ? "" : "s") + ").<br/><br/>" +
-                             "Your gapfill solutions will be stored in model ID: <b>" + outModel + "</b>.</div>";
-
-            element.append(outputText);
-        },
-
-        /* ------------ Integrate Gapfill Solution ---------------- */
-        integrateGapfillConfig: {
-            'Identifiers' : {
-                'Model' : '',
-                'Gapfill' : '',
-            },
-            'Output' : {
-                'New Model (optional)' : ''
-            }
-        },
-
-        integrateGapfillCommand: function() {
-            var self = this;
-            return function(params) {
-                return self._buildRunCommand("biokbase.narrative.demo.microbes_workflow", "integrate_gapfill", params);
-            };
-        },
-
-        integrateGapfillCreateOutput: function(element, text) {
-
-        },
-
-
-
-        /* --------------- END: MICROBES ----------------- */
 
 
         /**
@@ -767,8 +400,26 @@
          * configuration data. See 
          */
         _buildRunForm: function(name, cfg) {
-            console.log('_buildRunForm');
-            console.log(cfg);
+
+            /**
+             * Use cfg.params, like this:
+             *
+             *  viewGenomeRuntimeConfig: {
+             *    'params' : {
+             *      'Identifiers' : [
+             *        {
+             *           'name' : 'Genome',
+             *           'type' : 'Genome',
+             *           'default' : '',
+             *        },
+             *      ]
+             *    },
+             *    'command' : {
+             *      'module' : 'biokbase.narrative.demo.microbes_workflow',
+             *      'function' : 'view_genome_details'
+             *    },
+             *  }
+             */
 
             var cls = "class='table'";
             var sbn = "style='border: none'";
@@ -776,20 +427,58 @@
             var text = "<form>" + 
                        "<input type='hidden' name='kbfunc' value='" + name + "' />" +
                        "<table " + cls + ">";
-            $.each(cfg, function(key, value) {
 
-                text += "<tr " + sbn + "><td " + sbn + ">" + key + "</td>";
-                $.each(value, function(key2, value2) { 
-                    if (key2 == '') {
+            var self = this;
+            $.each(cfg.params, function(category, paramList) {
+                text += "<tr " + sbn + "><td " + sbn + ">" + category + "</td>";
+                $.each(paramList, function(idx, param) {
+                    /* param is an object with these expected fields:
+                     * {
+                     *    name : <name of the parameter>
+                     *    type : <type of parameter object - if left blank, a text input is used>
+                     *    default: <default value>
+                     * }
+                     */
+
+                    // if we don't have a name, it's a blank field.
+                    if (!param.name || param.name.length === 0) {
                         // this cell intentionally left blank
                         text += "<td " + sbn + ">&nbsp;</td>";
                     }
-                    else {
-                        text += "<td " + sbn + "><label>" + key2 + "</label>" + 
+
+                    // if we don't have a type (or it's blank), use a text field.
+                    else if (!param.type || param.type.length === 0) {
+                        // add a text input.
+                        text += "<td " + sbn + "><label>" + param.name + "</label>" + 
                                 "<input type='text' " + 
-                                "name='" + key + "." + key2 + "' " +
-                                "value='" + value2 + "'>"
+                                "name='" + category + "." + param.name + "' " +
+                                "value='" + (param.default ? param.default : '') + "'>"
                                 "</input></td>";
+                    }
+
+                    // if we have a type, get the list of objects of that type
+                    // from the workspace.
+                    else {
+                        // if there's a type, add the list of available objects
+                        // by type.
+                        // if none, insert a static message? TODO.
+
+                        var objectList = self.dataTableWidget.getLoadedData(param.type)[param.type];
+                        objectList.sort(function(a, b) { 
+                            if (a[0] < b[0]) 
+                                return -1;
+                            if (a[0] > b[0])
+                                return 1;
+                            return 0;
+                        });
+                        text += "<td " + sbn + ">" + 
+                                "<label>" + param.name + "</label>" +
+                                "<select name='" + category + "." + param.name + "'>";
+
+                        for (var i=0; i<objectList.length; i++) {
+                            text += "<option value='" + objectList[i][0] + "'>" + objectList[i][0] + "</option>";
+                        }
+                        text += "</select></td>";
                     }
                 });
 
@@ -797,7 +486,6 @@
             });
 
             text += "</table>" +
-                    "<input type='submit' value='Run' class='button' style='margin-top:5px'></input>" + 
                     "</form>";
 
             return text;
@@ -805,6 +493,11 @@
 
         /**
          * Re-usable utility function to build the code block to run something.
+         * From a Python package and module name, and a set of params as a Javascript object,
+         * it builds a string of Python code that will invoke the command.
+         * 
+         * @return a String containing a Python command from the package, module, and passed parameters.
+         * @private
          */
         _buildRunCommand: function(pkg, module, params) {
             var cmd = "run";
@@ -815,53 +508,45 @@
                 alert("Unable to run command: No active workspace!");
                 return "";
             }
-            code += "import os; os.environ['KB_WORKSPACE_ID'] = '" + this.ws_id + "'\n";  
+            code += "import os; os.environ['KB_WORKSPACE_ID'] = '" + this.ws_id + "'\n";
+            code += "os.environ['KB_AUTH_TOKEN'] = '" + this.ws_auth + "'\n";
             code += "params = " + this._pythonDict(params) + "\n";
             code += module + "." + cmd + "(params)" + "\n";
-            console.debug("CODE:", code);
             return code;
         },
 
         /**
          * Return a generic command runner.
+         * This runner takes all its information from the passed in cell, command, and parameters to the
+         * enclosed, return function.
+         * 
+         * @private
+         * @return a function that takes in cell, command, and parameters for the command.
          */
         _runner: function() {
             var self = this;
-            return function(code) {
-                // @@ code cell
+            return function(cell, command, params) {
                 var nb = IPython.notebook;
-                self.code_cell = nb.insert_cell_at_bottom('code');
-                self.code_cell.element.css("display", "none");
+                var currentIndex = nb.get_selected_index();
+                var codeCell = nb.insert_cell_below('code', currentIndex);
+                codeCell.element.css("display", "none");
+
                 var callbacks = {
-                    'execute_reply': $.proxy(self._handle_execute_reply, self),
-                    //'output': $.proxy(self.output_area.handle_output, self.output_area),
-                    //'output': $.proxy(self._handle_output, self),
-                    'output': $.proxy(self._handle_output, self),
-                    'clear_output': $.proxy(self._handle_clear_output, self),
-                    'set_next_input': $.proxy(self._handle_set_next_input, self),
-                    'input_request': $.proxy(self._handle_input_request, self)
+                    'execute_reply' : function(content) { self._handle_execute_reply(cell, content); },
+                    'output' : function(msg_type, content) { self._handle_output(cell, msg_type, content); },
+                    'clear_output' : function(content) { self._handle_clear_output(cell, content); },
+                    'set_next_input' : function(text) { self._handle_set_next_input(cell, text); },
+                    'input_request' : function(content) { self._handle_input_request(cell, content); },
                 };
-                self._buf = ""; // buffered output, see _handle_output()
-                //self.element.addClass("running");
-                // Progress bar elements
-                var eoffs = self.element.position();
-                self.progressdiv = $('<div/>').addClass('progress progress-striped').css({
-                    'width': '400px', 'height': '20px'});
-                self.progressbar = $('<div/>').addClass('progress-bar progress-bar-success').attr({
-                    'role': 'progressbar', 'aria-valuenow': '0', 'aria-valuemin': '0', 'aria-valuemax': '100'})
-                    .css('width', '0%');
-                self.progressmsg = $('<p/>').addClass('text-success');
-                self.progressdiv.append(self.progressbar);
-                self.element.append(self.progressdiv);
-                self.element.append(self.progressmsg);
-                // activate progress dialog
-                // @@ create code cell
-                self.code_cell.set_text(code); // @@ can this be skipped?
-                // @@ old execute
-                // var msg_id = self.kernel.execute(code, callbacks, {silent: true});
-                self.code_cell.output_area.clear_output(true, true, true);
-                self.code_cell.set_input_prompt('*');
-                self.code_cell.element.addClass("running");
+
+                var code = self._buildRunCommand(command.module, command.function, params);
+                codeCell.set_text(code);
+                codeCell.output_area.clear_output(true, true, true);
+                codeCell.set_input_prompt('*');
+                console.log("Running function: " + command.function);
+
+                self._resetProgress(cell);
+                $(cell.element).find("#kb-func-progress").css({"display":"block"});
                 var msgid = nb.kernel.execute(code, callbacks, {silent: true});
             };
         },
@@ -909,9 +594,9 @@
          * @method _handle_execute_reply
          * @private
          */
-        _handle_execute_reply: function (content) {
+        _handle_execute_reply: function (cell, content) {
             console.debug("Done running the function", content);
-            this._showProgress("DONE", 0, 0);
+            this._showProgress(cell, "DONE", 0, 0);
             //this.set_input_prompt(content.execution_count);
             $([IPython.events]).trigger('set_dirty.Notebook', {value: true});
         },
@@ -919,7 +604,7 @@
          * @method _handle_set_next_input
          * @private
          */
-        _handle_set_next_input: function (text) {
+        _handle_set_next_input: function (cell, text) {
             var data = {'cell': this, 'text': text}
             $([IPython.events]).trigger('set_next_input.Notebook', data);
         },
@@ -927,7 +612,7 @@
          * @method _handle_input_request
          * @private
          */
-        _handle_input_request: function (content) {
+        _handle_input_request: function (cell, content) {
             console.log("handle input request called");
             return;
             //this.output_area.append_raw_input(content);
@@ -936,7 +621,7 @@
          * @method _handle_clear_output
          * @private
          */
-        _handle_clear_output: function (content) {
+        _handle_clear_output: function (cell, content) {
             console.debug("handle clear ouput called");
             return;
             //this.clear_output(content.stdout, content.stderr, content.other);
@@ -945,14 +630,17 @@
         /**
          * @method _handle_output
          */
-        _handle_output: function (msg_type, content) {
+        _handle_output: function (cell, msg_type, content) {
             // copied from outputarea.js
             console.debug("_handle_output got (" + msg_type + ") " + content);
+            var buffer = "";
             if (msg_type === "stream") {
-                this._buf += content.data;
-                var lines = this._buf.split("\n");
-                var offs = 0, done = false, self = this;
-                var result = "";
+                buffer += content.data;
+                var lines = buffer.split("\n");
+                var offs = 0, 
+                    done = false, 
+                    self = this,
+                    result = "";
                 $.each(lines, function(index, line) {
                     if (!done) {
                         if (line.length == 0) {
@@ -966,7 +654,7 @@
                                 var items = line.substr(1, line.length - 1).split(",");
                                 // expect: .p,name-of-thing,done,total
                                 if (items.length == 3) {
-                                    self._showProgress(items[0], items[1], items[2]);
+                                    self._showProgress(cell, items[0], items[1], items[2]);
                                     // will trim buffer to remove this
                                     offs += line.length; 
                                     if (index < lines.length - 1) {
@@ -977,77 +665,124 @@
                                     done = true; // partial line; wait for more data
                                 }
                             }
-                            // No progress marker on non-empty line => final output of program
+                            // No progress marker on non-empty line => final output of program?
                             else {
-                                // save the line
-                                result += line;
-                                // all but the last line should have \n appended
-                                if (index < lines.length - 1) {
-                                    result += "\n";
+                                // XXX: @ and # should probably be swapped in meaning
+                                if (line.match(/^@/)) {
+                                    // log lines starting with '@'
+                                    console.info("[KERNEL] " + line.substr(1, line.length).trim());
+                                    // consume data
+                                    offs += line.length;
                                 }
+                                else {
+                                    console.debug("Saving line: "+ line);
+                                    // save the line
+                                    result += line;
+                                    // all but the last line should have \n appended
+                                    if (index < lines.length - 1) {
+                                        result += "\n";
+                                    }
+                                }
+
                             }
                         }
                     }
                 });
                 if (offs > 0) {
                     // if we found progress markers, trim processed prefix from buffer
-                    this._buf = this._buf.substr(offs, this._buf.length - offs);
+                    buffer = buffer.substr(offs, buffer.length - offs);
                 }
                 if (result.length > 0) {
-                    var element = this._addOutputCell();
-                    this.result_handler(element, result);
-                    this._buf = "";
+                    // stop using the dom element for output and use the IPython cell
+                    // var element = this._addOutputCell();
+                    // this.result_handler(element, result);
+                    if (this.dataTableWidget)
+                        this.dataTableWidget.render();
+
+                    var outputCell = this._addOutputCell(IPython.notebook.find_cell_index(cell));
+
+                    var uuid = this._uuidgen();
+
+                    var cellText = ["<div id=\""+uuid+"\"></div>",
+                             "<script>",
+                             "$(\"#"+uuid+"\")." + result + 
+                             "// Make the element a little bigger",
+                             "$(\"#"+uuid+"\").css({margin: '-10px'});",
+                             "// Disable most actions on this element",
+                             "$(\"#"+uuid+"\").off('click dblclick keydown keyup keypress focus');",
+                             "</script>"].join('\n');
+                    outputCell.set_text(cellText);
+                    outputCell.rendered = false; // force a render
+                    outputCell.render();
+
                 }
             }
         },
 
         /**
-         * @method _show_progress
+         * @method _resetProgress
+         * @private
+         * Resets the progress bar in the given cell to not show any progress or progress message.
+         * @param cell - the IPython notebook cell to reset.
+         */
+        _resetProgress: function(cell) {
+            var $progressBar = $(cell.element).find("#kb-func-progress .kb-cell-progressbar .progress-bar");
+            $progressBar.css('width', '0%');
+
+            var $progressMsg = $(cell.element).find("#kb-func-progress .text-success");
+            $progressMsg.text("");
+        },
+
+        /**
+         * @method _showProgress
+         *
+         * Shows current progress in a running IPython function.
+         * @param cell - the cell being run
+         * @param name - the text of the progress to set
+         * @param done - the number of steps finished.
+         * @param total - the total number of steps to go through.
+         *
          * @private
          */
-        _showProgress: function(name, done, total) {
+        _showProgress: function(cell, name, done, total) {
             console.debug("Progress: '" + name + "': " + done + " / " + total);
-            var pct_done = 0;
-            if (name == 'DONE') {
-                this.progressmsg.text("Completed");
-                pct_done = 100;
+            var percentDone = 0;
+
+            var $progressBar = $(cell.element).find("#kb-func-progress .kb-cell-progressbar .progress-bar");
+            var $progressMsg = $(cell.element).find("#kb-func-progress .text-success");
+            if (name === 'DONE') {
+                $progressMsg.text("Completed");
+                percentDone = 100;
+                $progressBar.css('width', '100%');
+                $(cell.element).find("#kb-func-progress").fadeOut(1000);
             }
             else {
-                this.progressmsg.text("Step " + done + " / " + total + ": " + name);
-                pct_done = (100 * done - 100) / total;
-            }
-
-            this.progressbar.css('width', pct_done.toFixed(0) + '%');
-
-            if (name == 'DONE') {
-                this.progressmsg.fadeOut(1000);
-                this.progressdiv.fadeOut(1000);
-                this.element.removeClass('running');
+                $progressMsg.text("Step " + done + " / " + total + ": " + name);
+                percentDone = (100 * done - 100) / total;
+                $progressBar.css('width', percentDone + '%');
             }
         },
 
         /**
          * Add a new cell for output of the script.
          *
-         * XXX: The cell is added at the bottom, which is really
-         * not the right thing to do if the script is in
-         * the middle of the narrative. It should replace or
-         * at least insert itself right after the script.
+         * The cell is added below the cell in currentIndex. This position
+         * should be set by the calling function to represent the position of
+         * the calling function cell.
          *
          * @method _addOutputCell
          * @private
          * @return id of <div> inside cell where content can be placed
          */
-         _addOutputCell: function() {
+        _addOutputCell: function(currentIndex) {
             var nb = IPython.notebook;
-            var cell = nb.insert_cell_at_bottom('markdown');
-            eid = this._uuidgen();
-            var content = "<div id='" + eid + "'></div>";
-            cell.set_text(content);
-            cell.rendered = false; // force a render
-            cell.render();
-            return $('#' + eid);
-         },
+            var cell = nb.insert_cell_below('markdown', currentIndex);
+
+            cell.metadata['kb-cell'] = 'output';
+            this._removeCellEditFunction(cell);
+
+            return( cell );
+        },
 
         /** Not really used right now. */
         convert_mime_types: function (json, data) {
@@ -1116,10 +851,13 @@
          *
          * @returns this
          */
-		render: function() {
+        render: function() {
             this.rebindRunButtons();
-			return this;
-		},
+            if (this.dataTableWidget !== undefined) {
+                this.dataTableWidget.render();
+            }
+            return this;
+        },
 
         /**
          * Log in to all the widgets.
@@ -1127,7 +865,7 @@
          * @param token
          * @returns this
          */
-		loggedIn: function(token) {
+        loggedIn: function(token) {
             this.ws_client = new workspaceService(this.options.workspaceURL);
             this.ws_auth = token;
             var un = token.match(/un=[\w_]+|/);
@@ -1139,7 +877,7 @@
             this.uploadWidget = this.uploadWidget_dlg.kbaseUploadWidget(this.uploadWidget_opts);
             //this.uploadWidget.createDialog(); -- redundant
             this.render();
-		},
+        },
 
         /**
          * Log out from all the widgets.
@@ -1147,10 +885,10 @@
          * @param token
          * @returns this
          */
-		loggedOut: function(token) {
+        loggedOut: function(token) {
             this.dataTableWidget.loggedOut(token);
             this.ws_client = null, this.ws_auth = null;
-		},
+        },
 
         /**
          * Initialize the logger
@@ -1164,11 +902,378 @@
          *
          * @private
          */
-         _uuidgen: function() {
+        _uuidgen: function() {
             return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
                 var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
                 return v.toString(16);});
-         }
-	});
+        },
+
+
+        /***********************************************
+         *********** FUNCTION CONFIGURATIONS ***********
+         ***********************************************/
+
+        /* -------------- PLANTS ---------------------- */
+        /** 
+         * Input data for plants demo.
+         */
+        plantsRunConfig: {
+            params : {
+                'Identifiers' : [
+                    {
+                        name: 'Genome',
+                        type: '',
+                        default: '3899'
+                    },
+                    {
+                        name: 'Ontology',
+                        type: '',
+                        default: 'GSE5622'
+                    },
+                ],
+                'Filter' : [
+                    {
+                        name: '-n',
+                        type: '',
+                        default: '100'
+                    },
+                    {
+                        name: '',
+                        type: '',
+                        default: 'x'
+                    }
+                ],
+                'Network' : [
+                    {
+                        name: 'Pearson cutoff',
+                        type: '',
+                        default: '0.50'
+                    },
+                    {
+                        name: '',
+                        type: '',
+                        default: 'x'
+                    }
+                ],
+                'Cluster' : [
+                    {
+                        name: 'Number of modules',
+                        type: '',
+                        default: '5'
+                    },
+                    {
+                        name: '',
+                        type: '',
+                        default: ''
+                    }
+                ]
+            },
+            command: {
+                'module' : 'biokbase.narrative.demo.coex_workflow',
+                'function' : 'coex_network_ws'
+            }
+        },
+
+
+        /* -------------- END: PLANTS ---------------------- */
+
+
+
+        /* -------------- MICROBES ---------------- */
+
+        /* --------- Assemble Contigs from FASTA reads -----------*/
+        runAssemblyConfig: {
+            params: {
+                'Identifiers' : [
+                    {
+                        name: 'Paired-End Files<br>(comma-delimited)',
+                    },
+                    {
+                        name: 'Single-End Files<br>(comma-delimited)',
+                    },
+                    {
+                        name: 'Sequence Files<br>(comma-delimited)',
+                    },
+                ],
+                'Assembly Params': [
+                    {
+                        name: 'Assemblers',
+                    },
+                    {
+                        name: 'Reference',
+                    },
+                    {
+                        name: 'Notes',
+                    }
+                ],
+                'Output': [
+                    {
+                        name: 'Contig Set Name'
+                    },
+                    {
+                        name: '',
+                    },
+                    {
+                        name: '',
+                    }
+                ]
+            },
+            command: {
+                'module' : 'biokbase.narrative.demo.microbes_workflow',
+                'function' : 'run_assembly'
+            }
+        },
+
+        /* ---------- Assemble Genome from Contigs ----------- */
+        assembleGenomeConfig: {
+            params: {
+                'Identifiers' : [
+                    {
+                        name: 'Contig Set',
+                        type: 'ContigSet'
+                    },
+                ],
+                'Output' : [
+                    {
+                        name: 'New Genome',
+                    }
+                ]
+            },
+            command: {
+                'module' : 'biokbase.narrative.demo.microbes_workflow',
+                'function' : 'assemble_genome'
+            }
+        },
+
+        /* ---------- Annotate Assembled Genome ----------- */
+        annotateGenomeConfig: {
+            params: {
+                'Identifiers' : [
+                    {
+                        name: 'Genome',
+                        type: 'Genome'
+                    }
+                ],
+                'Output' : [
+                    {
+                        name: 'New Genome ID (optional)',
+                    }
+                ]
+            },
+            command: {
+                'module' : 'biokbase.narrative.demo.microbes_workflow',
+                'function' : 'assemble_genome'
+            }
+        },
+
+
+        /* ---------- View Genome Details ----------- */
+
+        // viewGenomeConfig: {
+        //     'Identifiers' : {
+        //         'Genome' : {
+        //             'type' : 'Genome',
+        //             'default' : '',
+        //         }
+        //     }
+        // },
+
+        viewGenomeConfig: {
+            'params' : {
+                'Identifiers' : [
+                    {
+                        name: 'Genome',
+                        type: 'Genome',
+                        default: ''
+                    },
+                ]
+            },
+            'command' : {
+                'module' : 'biokbase.narrative.demo.microbes_workflow',
+                'function' : 'view_genome_details'
+            },
+        },
+
+        /* ------------ Genome to FBA Model ----------------- */ 
+        genomeToFbaConfig: {
+            params: {
+                'Identifiers' : [
+                    {
+                        name: 'Genome',
+                        type: 'Genome'
+                    },
+                ]
+            },
+            command: {
+                module: 'biokbase.narrative.demo.microbes_workflow',
+                function: 'genome_to_fba_model'
+            },
+        },
+
+
+        /* ---------- View Model ----------- */
+        viewFbaModelConfig: {
+            params: {
+                'Identifiers' : [
+                    {
+                        name: 'Model',
+                        type: 'Model'
+                    }
+                ]
+            },
+            command: {
+                module: 'biokbase.narrative.demo.microbes_workflow',
+                function: 'view_fba_model'
+            }
+        },
+
+        /* --------- Build Media ------------ */
+        buildMediaConfig: {
+            params: {
+                'Identifiers' : [
+                    {
+                        name: 'Base Media (optional)',
+                        type: 'Media',
+                        default: 'None'
+                    },
+                ],
+            },
+            command: {
+                module: 'biokbase.narrative.demo.microbes_workflow',
+                function: 'build_media'
+            }
+        },
+
+        /* ---------- View Media ---------- */
+        viewMediaConfig: {
+            params: {
+                'Identifiers' : [
+                    {
+                        name: 'Media',
+                        type: 'Media',
+                    }
+                ]
+            },
+            command: {
+                module: 'biokbase.narrative.demo.microbes_workflow',
+                function: 'view_media'
+            }
+        },
+
+        /* --------- Run Flux Balance Analysis --------------- */
+        runFbaConfig: {
+            params: {
+                'Identifiers' : [
+                    {
+                        name: 'Model',
+                        type: 'Model'
+                    },
+                    {
+                        name: 'Media',
+                        type: 'Media'
+                    }
+                ],
+                'Misc' : [
+                    {
+                        name: 'Notes',
+                        type: '',
+                    }
+                ],
+            },
+            command: {
+                module: 'biokbase.narrative.demo.microbes_workflow',
+                function: 'run_fba'
+            },
+        },
+
+
+        /* ------------ View FBA Results ------------ */
+
+        viewFbaConfig: {
+            params: {
+                'Identifiers' : [
+                    {
+                        name: 'FBA Result',
+                        type: 'FBA'
+                    }
+                ]
+            },
+            command: {
+                module: 'biokbase.narrative.demo.microbes_workflow',
+                function: 'view_fba'
+            }
+        },
+
+        /* ------------ Gapfill FBA Model -------------- */
+        runGapfillConfig: {
+            params: {
+                'Identifiers' : [
+                    {
+                        name: 'Model',
+                        type: 'Model',                        
+                    },
+                    {
+                        name: 'Media',
+                        type: 'Media',
+                    }
+                ],
+
+                'Solutions' : [
+                    {
+                        name: 'Number to seek',
+                        type: '',
+                        default: '1',
+                    }
+                ],
+
+                'Time' : [
+                    {
+                        name: 'Per Solution (sec)',
+                        type: '',
+                        default: '3600',
+                    },
+                    {
+                        name: 'Total Limit (sec)',
+                        type: '',
+                        default: '3600'
+                    }
+                ],
+            },
+            command: {
+                module: 'biokbase.narrative.demo.microbes_workflow',
+                function: 'run_gapfill'
+            },
+        },
+
+        /* ------------ Integrate Gapfill Solution ---------------- */
+        integrateGapfillConfig: {
+            params: {
+                'Identifiers' : [
+                    {
+                        name: 'Model',
+                        type: 'Model',
+                    },
+                    {
+                        name: 'Gapfill',
+                    },
+                ],
+                'Output' : [
+                    {
+                        name: 'New Model (optional)'
+                    },
+                ],
+            },
+            command: {
+                module: 'biokbase.narrative.demo.microbes_workflow',
+                function: 'integrate_gapfill'
+            }
+        },
+
+        /* --------------- END: MICROBES ----------------- */
+
+
+
+
+    });
 
 })( jQuery );

@@ -20,8 +20,10 @@
         $loading: null,
         isLoggedIn: false,
         ws_auth: null,
+        // The set of all data currently loaded into the widget
+        loadedData: {},
 		options: {
-			loadingImage: "ajax-loader.gif",
+			loadingImage: "../../images/ajax-loader.gif",
 			notLoggedInMsg: "Please log in to view a workspace.",
             container: null,
             ws_id: null
@@ -78,20 +80,42 @@
                 this.table.fnDestroy();
             }
             var $elem = this.$tbl.find('table');
+
+            //filter out the narrative and workspace meta files
+            var result_data = [];
+            $.each(this.tableData, function( index, obj ) {
+
+                if ((obj[1] != "Narrative") && (obj[1] != "workspace_meta")) {
+                    result_data.push(obj);
+                }
+            });
+            //this.tableData = result_data;
             this.table = $elem.dataTable( {
-                aaData : this.tableData,
+                aaData : result_data,
                 aoColumns : [
                     /* Name */{
                       sTitle: 'Name',
                       bSortable: true,
                       bSearchable: true
                               },
-                    /* Type */ {
+                    /*Type */  {
                         sTitle: 'Type',
                         bSortable: true,
                         bSearchable: true
-                    },
+                    }, 
                 ],
+                aoColumnDefs: [
+                        {
+                            "bVisible": false, 
+                            "aTargets": [ 1 ] 
+                        },
+                        {                            
+                             mRender: function ( data, type, row ) {
+                                return data + "<span class='kb-function-help'>?</span>";
+                            },
+                            "aTargets": [ 0 ] 
+                        }
+                    ],
                 oSearch: {sSearch: ''},
                 aaSorting: [[0, 'asc'], [1, 'asc']],
                 //bFilter: false,
@@ -102,6 +126,7 @@
                 bScrollCollapse: true,
                 sScrollY: '270px'
             });
+            var oTable = this.table;
             /* indices of displayed columns in result array */
             this.NAME_IDX = 0;
             this.TYPE_IDX = 1;
@@ -121,21 +146,49 @@
             }
             $("#kb-ws .kb-table tbody tr").on("click", function( e ) {
                 if ( $(this).hasClass('row_selected') ) {
+                    var aPos = oTable.fnGetPosition( this );
+                    var aData = oTable.fnGetData( aPos );
+                    var type = aData[1];
+
+                    console.log(this);
                     var row = $(this)[0];
                     //console.debug("obj",$(this));
                     var name = row.children[0].textContent;
-                    var type = row.children[1].textContent;
+                    //var type = row.children[1].textContent;
                     // populate and show info panel
-                    self.infoPanel(name, type, function(info) {
+                    //self.infoPanel(name, type, function(info) {
+                    //    info.modal();
+                    //});
+                }
+            });
+            $("#kb-ws .kb-table tbody tr span").on("click", function( e ) {
+                //if ( $(this).hasClass('row_selected') ) {
+                    var row = $(this).parent().parent();
+                    var aPos = oTable.fnGetPosition( $(row)[0] );
+                    // Get the data array for this row
+                    var aData = oTable.fnGetData( aPos );
+                    var type = aData[1];
+
+                    //console.debug("obj",$(this));
+                    var name = $(row).children()[0].textContent;
+                    //var type = $(row).children()[1].textContent;
+                    // populate and show info panel
+                    var name2 = name.replace("?","");
+
+                    self.infoPanel(name2, type, function(info) {
                         info.modal();
                     });
-                }
+                //}
             });
 			return this;
 		},
 
         /* Convert object metadata from list to object */
         _meta2obj: function(m) {
+            var md;
+            if (m[10] != undefined && m[10].length > 0) {
+                eval("md = " + m[10] + ";");
+            }
             return {
                 'id': m[0], // an object_id
                 'type': m[1], //an object_type
@@ -147,8 +200,7 @@
                 'workspace': m[7], // a workspace_id string
                 'ref': m[8], // a workspace_ref string
                 'chsum': m[9], // a string
-                // XXX: need to do more with this one:
-                //'metadata': m[10] // an object
+                'metadata': md // an object
             };
         },
 
@@ -213,6 +265,7 @@
             var get_selected = function(tbl) {
                 return tbl.$('tr.row_selected');
             }
+
             $rows.on("click", function( e ) {
                 if ( $(this).hasClass('row_selected') ) {
                     var row = $(this)[0];
@@ -245,17 +298,66 @@
             var body = $elem.find('tbody');
             body.empty();
             $.each(data, function(key, value) {
-                var tr = body.append($('<tr>'));                
-                tr.append($('<td>').text(key));
-                tr.append($('<td>').text(value));
+                if (key != 'metadata') {
+                    var tr = body.append($('<tr>'));    
+                    tr.append($('<td>').text(key));
+                    tr.append($('<td>').text(value));
+                }
             });
+            // Add metadata, if there is any
+            var $meta_elem = $('#kb-obj table.kb-metainfo');
+            var body = $meta_elem.find('tbody')
+            body.empty();
+            console.debug("Metadata:", data.metadata);
+            if (data.metadata !== undefined && Object.keys(data.metadata).length > 0) {
+                $.each(data.metadata, function(key, value) {
+                    console.debug("MD key=" + key + ", value=",value);
+                    // expect keys with '_' to mark sub-sections
+                    if (key.substr(0,1) == '_') {
+                        var pfx = key.substr(1, key.length);
+                        console.debug("Prefix: " + pfx);
+                        $.each(value, function(key2, value2) {
+                            var tr = body.append($('<tr>'));    
+                            // key
+                            var td = $('<td>');
+                            var $prefix = $('<span>').addClass("text-muted").text(pfx + " ");
+                            td.append($prefix);
+                            td.append($('<span>').text(key2));
+                            tr.append(td);
+                            // value
+                            tr.append($('<td>').text(value2));
+                        });
+                    }
+                    else {
+                        var tr = body.append($('<tr>'));    
+                        tr.append($('<td>').text(key));
+                        tr.append($('<td>').text(value));                        
+                    }
+                });
+            }
+            else {
+                body.append($('<tr>')).append($('<td>').text("No metadata"));
+            }
             // XXX: hack! add button for viz if network
             if (data.type == 'Networks') {
                 this.addNetworkVisualization(data);
             }
+            else {
+                body.append($('<tr>')).append($('<td>').text("No metadata"));
+            }
+            // XXX: hack! add button for viz if network
+            // (slightly less of a hack now? --Bill)
+            this.addVisualizationButton(data);
+
+
+            // if (data.type === 'Networks') {
+            //     this.addNetworkVisualization(data);
+            // }
+
+
         },
 
-        addNetworkVisualization: function(data) {
+        addVisualizationButton: function(data) {
             var oid = data.id, oinst = data.instance;
             var $footer = $('#kb-obj .modal-footer');
             var $btn = $footer.find('button.kb-network');
@@ -263,7 +365,20 @@
             // add new button/binding
             var self = this;
             $btn.click(function(e) {
-                console.debug("creating vis. for object: " + oid + "." + oinst);
+                // Figure out the viz function for the data type.
+                // If it doesn't exist throw an error/warning and stop here.
+                // Later-- have it autogen/insert some kind of table for unregistered data types.
+                // Or maybe just insert the metadata?
+
+                var type = data.type;
+                type = type.trim().replace(/\s+/g, "_");
+
+                console.debug('making viz for ' + type);
+                var typeVizFunction = "_add" + type + "Visualization";
+                if (!self[typeVizFunction])
+                    typeVizFunction = "_addDefaultVisualization";
+
+//                console.debug("creating vis. for object: " + oid + "." + oinst);
                 var cell = IPython.notebook.insert_cell_at_bottom('markdown');
                 // put div inside cell with an addr
                 var eid = self._uuidgen();
@@ -275,12 +390,158 @@
                 // slap network into div by addr
                 var $target = $('#' + eid);
                 $target.css({'margin': '-10px'});
-                $target.ForceDirectedNetwork({
-                    workspaceID: self.ws_id + "." + oid + "#" + oinst,
-                    token: self.ws_auth,
-                });
+
+                self[typeVizFunction](data, $target);
+
+                // $target.ForceDirectedNetwork({
+                //     workspaceID: self.ws_id + "." + oid + "#" + oinst,
+                //     token: self.ws_auth,
+                // });
             });
         },
+
+        _addNetworksVisualization: function(data, $target) {
+            var oid = data.id;
+            var oinst = data.instance;
+            // var workspaceID = self.ws_id + "." + oid + "#" + oinst;
+            // var token = self.ws_auth;
+            $target.ForceDirectedNetwork({
+                workspaceID: this.ws_id + "." + oid + "#" + oinst,
+                token: this.ws_auth,
+            });
+
+        },
+
+        _addGenomeVisualization: function(data, $target) {
+            var tableRow = function(a, b) {
+                return $("<tr>")
+                       .append("<td>" + a + "</td>")
+                       .append("<td>" + b + "</td>");
+            };
+
+            var calcGC = function(gc, total) {
+                if (gc > 1)
+                    gc = gc/total;
+                return (100*gc).toFixed(2);
+            };
+
+            var $metaTable = $("<table>")
+                             .addClass("table table-striped table-bordered")
+                             .css({"margin-left":"auto", "margin-right":"auto", "width":"100%"})
+                             .append(tableRow("<b>ID</b>", "<b>" + data.id + "</b>"))
+                             .append(tableRow("Scientific Name", data.metadata.scientific_name))
+                             .append(tableRow("Size", data.metadata.size + " bp"))
+                             .append(tableRow("GC Content", calcGC(data.metadata.gc, data.metadata.size) + "%"))
+                             .append(tableRow("Number Features", data.metadata.number_features))
+                             .append(tableRow("Workspace", data.workspace));
+
+            $target.append("<h3>Genome</h3>")
+                   .append($metaTable);
+        },
+
+        _addMediaVisualization: function(data, $target) {
+            $target.kbaseMediaEditorNarrative({
+                ws: this.ws_id,
+                auth: this.ws_auth,
+                id: data.id,
+            });
+        },
+
+        _addModelVisualization: function(data, $target) {
+            var loading = $("<div>")
+                          .addClass("loading")
+                          .append("<img src='" + this.options.loadingImage + "' />Loading...");
+            $target.append(loading);
+
+            var fba = new fbaModelServices('http://kbase.us/services/fba_model_services');
+            var modelAJAX = fba.get_models_async(
+                {
+                    models: [data.id], 
+                    workspaces: [this.ws_id], 
+                    auth: this.ws_auth
+                },
+                function(data) {
+                    $target.find(".loading").remove();
+                    $target.kbaseModelTabs({ modelsData: data });
+                });
+        },
+
+        _addFBAVisualization: function(data, $target) {
+            var loading = $("<div>")
+                          .addClass("loading")
+                          .append("<img src='" + this.options.loadingImage + "' />Loading...");
+            $target.append(loading);
+
+            var fba = new fbaModelServices('http://kbase.us/services/fba_model_services');
+            var modelAJAX = fba.get_fbas_async(
+                {
+                    fbas: [data.id], 
+                    workspaces: [this.ws_id], 
+                    auth: this.ws_auth
+                },
+                function(data) {
+                    $target.find(".loading").remove();
+                    $target.kbaseFbaTabsNarrative({ fbaData: data });
+                });
+        },
+
+        // _addContigSetVisualization: function(data, $target) {
+
+        // },
+
+        // Just adds a simple table with ID, datatype, owner, and ws location for now.
+        // Maybe something fancier later.
+        _addDefaultVisualization: function(data, $target) {
+            var $metaTable = $("<table>")
+                             .addClass("table table-striped table-bordered")
+                             .css({"margin-left" : "auto", "margin-right" : "auto"});
+
+            var makeRow = function(a, b) {
+                var row = $("<tr>")
+                          .append("<td>" + a + "</td>")
+                          .append("<td>" + b + "</td>");
+
+                return row;
+            };
+
+            console.log(data);
+
+            $metaTable.append(makeRow("ID", data.id))
+                      .append(makeRow("Type", data.type))
+                      .append(makeRow("Owner", data.owner))
+                      .append(makeRow("Workspace", data.workspace));
+
+            $target.append("<h3>Data Object</h3>(No visualization available)")
+                   .append($metaTable);
+
+        },
+
+        // _addNetworkVisualization: function(data) {
+        //     var oid = data.id, oinst = data.instance;
+        //     var $footer = $('#kb-obj .modal-footer');
+        //     var $btn = $footer.find('button.kb-network');
+        //     $btn.show();
+        //     // add new button/binding
+        //     var self = this;
+        //     $btn.click(function(e) {
+        //         console.debug("creating vis. for object: " + oid + "." + oinst);
+        //         var cell = IPython.notebook.insert_cell_at_bottom('markdown');
+        //         // put div inside cell with an addr
+        //         var eid = self._uuidgen();
+        //         var content = "<div id='" + eid + "'></div>";
+        //         cell.set_text(content);
+        //         // re-render cell to make <div> appear
+        //         cell.rendered = false;
+        //         cell.render();
+        //         // slap network into div by addr
+        //         var $target = $('#' + eid);
+        //         $target.css({'margin': '-10px'});
+        //         $target.ForceDirectedNetwork({
+        //             workspaceID: self.ws_id + "." + oid + "#" + oinst,
+        //             token: self.ws_auth,
+        //         });
+        //     });
+        // },
 
         _uuidgen: function() {
             return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -305,11 +566,13 @@
                 var that = this;
                 this.setWs(function() {
                     var opts = {workspace: that.ws_id, auth: that.ws_auth};
+                    console.debug("list_workspace_objects.begin");
                     that.ws_client.list_workspace_objects(opts,
                         function(results) {
                             //console.log("Results: " + results);
                             that.updateResults(results);
                             that.createTable();
+                            console.debug("list_workspace_objects.end");
                         },
                         function(err) {
                             console.error("getting objects for workspace " + that.ws_id, err);
@@ -322,6 +585,43 @@
             }
             return this;
 		},
+
+        /**
+         * Returns the set of currently loaded data objects from the workspace.
+         * These are returned as ______
+         *
+         * If 'type' is a string, then it returns only objects matching that
+         * object type (this is case-sensitive!).
+         * 
+         * If 'type' is an array, then it returns only objects matching all of
+         * those types.
+         *
+         * Returns data like this:
+         * { 
+         *   type1 : [ [metadata1], [metadata2], ... ],
+         *   type2 : [ [metadata3], [metadata4], ... ]
+         * }
+         * @returns a list of data objects
+         */
+        getLoadedData: function(type) {
+            if (!type || type.length === 0)
+                return this.loadedData;
+
+            var dataSet = {};
+            if (typeof type === 'string') {
+                type = [type];
+            }
+            if (Object.prototype.toString.call(type) === '[object Array]') {
+                for (var i=0; i<type.length; i++) {
+                    var dataType = type[i];
+                    if (this.loadedData[dataType])
+                        dataSet[dataType] = this.loadedData[dataType];
+                }
+            }
+
+            return dataSet;
+        },
+
         /**
          * Set or create workspace
          *
@@ -357,7 +657,7 @@
                 });
             this.ws_id = name;
             // Set the title of the UI element showing the data
-            $('#kb-wsname').text(name);
+            //$('#kb-wsname').text(name);
             
             return this;
         },
@@ -410,6 +710,21 @@
          * @returns this
          */
         updateResults: function(results) {
+            /* Store the current set of loaded metadata as:
+             * { 
+             *    type1 : [ [metadata1], [metadata2], [metadata3], ... ],
+             *    type2 : [ [metadata4], [metadata5], [metadata6], ... ]
+             * }
+             */
+            this.loadedData = {};
+            for (var i=0; i<results.length; i++) {
+                var type = results[i][1];
+                if (!this.loadedData[type])
+                    this.loadedData[type] = [];
+                this.loadedData[type].push(results[i]);
+            }
+            console.log(this.loadedData);
+
             var mdstring = '';
             $.each(IPython.notebook.metadata, function(key, val) {
                 mdstring = mdstring + key + "=" + val + "\n";
@@ -439,6 +754,7 @@
          * @private
          */
         _item_key: function(name, type) {
+
             return name + '/' + type;
         },
 

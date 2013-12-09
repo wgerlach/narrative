@@ -14,25 +14,32 @@ For data in KBase workspace
 
 /* header area */
 #kb-ws .kb-header {
-    background-color: #008988;
+    background-color: #b6e9f8;
     width: 100%;
     color: #ddd;
     font-family: OxygenRegular;
     font-size: 16px;
     /* text-align: center; */
     padding: 5px 5px 5px 10px;
+
+   /* border-top-left-radius: 4px;
+    border-top-right-radius: 4px; */
+
 }
 .kb-header #kb-wsname {
-    color: white;
-    margin-left: 0.25em;
+    color: #0064b6;
+    margin-left: 20px;
     font-weight: 900;
 }
 
 #kb-ws .kb-controls {
     width: 100%;
     height: 30px;
-    background-color: #008988;
+    background-color: #b6e9f8;
     padding-left: 3px;
+   /* border-bottom-right-radius: 4px;
+    border-bottom-left-radius: 4px; */
+    margin-bottom: 3px;
 }
 
 /* little search icon next to text field */
@@ -60,7 +67,7 @@ For data in KBase workspace
     width: 40px;
     font-size: 100%;
     overflow-x: hidden;
-    color: white;
+    color: #0064b6;
     font-family: OxygenMonoRegular;
     text-decoration-line: underline;
     text-decoration-color: #f5f5f5;
@@ -70,6 +77,16 @@ For data in KBase workspace
     margin-top: 25px;
 }
 /* end: upload pulldown */
+
+/* Refresh button */
+#kb-ws-refresh {
+    position: absolute;
+    top: 3px;
+    left: 5px;
+    padding: 0px 6px;
+    overflow: hidden;
+}
+/* end: Refresh button */
 
 /* Data table */
 #kb-ws .kb-table table {
@@ -131,6 +148,7 @@ For data in KBase workspace
 
 /* Object details window */
 #kb-obj {
+    height: 800px;
 }
 #kb-obj table {
     font-family: OxygenRegular, Arial, sans-serif;
@@ -147,6 +165,7 @@ For data in KBase workspace
     text-decoration: underline;
     cursor: pointer;
 }
+/* For pagination */
 #kb-obj ul.list-group {
     display: block;
     margin-top: 15px;
