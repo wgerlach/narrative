@@ -1,0 +1,3 @@
+[submodule "src/notebook/ipython_profiles/profile_narrative/kbase_templates/static/kbnetwork"]
+	path = src/notebook/ipython_profiles/profile_narrative/kbase_templates/static/kbnetwork
+	url = kbase@git.kbase.us:ui-common
