@@ -65,7 +65,7 @@ do
 done
 
 # Make sure that the necessary dependencies for installing the notebook in a virtualenv are available
-dependency_commands="python virtualenv git"
+dependency_commands="python pip virtualenv git"
 
 # Exit if we are missing a dependency
 for dcommand in $dependency_commands; do
@@ -75,6 +75,9 @@ for dcommand in $dependency_commands; do
   fi
 done
 
+echo "Installing Python dependencies..."
+dependency_modules="pyzmq jinja2 tornado python-dateutil httplib2"
+pip install --upgrade $dependency_modules
 
 printf "Creating virtual environment $venv...\n"
 virtualenv --python=$PYTHON --system-site-packages $installPath/$venv
