@@ -30,7 +30,8 @@ inv_cwd = '/'
 have_browser = None
 
 # End points for various services
-endpoint = { 'invocation' : 'https://kbase.us/services/invocation' }
+endpoint = { 'invocation' : 'https://kbase.us/services/invocation',
+             'workspace' : 'https://kbase.us/services/workspace' }
 
 # IPython interpreter object
 ip = None
