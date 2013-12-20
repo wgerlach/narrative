@@ -71,7 +71,7 @@
 
       <div id="project_stuff" class="col-sm-8">
   			<h1>Manage Projects</h1>
-        
+         
         <div id="success_message" class="alert alert-success" style="display: none;">
           <span></span>
           <button type="button" class="close" aria-hidden="true">&times;</button>
