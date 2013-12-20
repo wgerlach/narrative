@@ -158,7 +158,7 @@
 		{{#rows}}
 		<tr>
 			<td><input type="checkbox"></td>
-			<td><a href="http://narrative.kbase.us/{{project_id}}.{{narrative_id}}">{{name}}</a></td>
+			<td><a href="http://narrative.kbase.us/narrative/user_test/{{project_id}}.{{narrative_id}}">{{name}}</a></td>
 			<td>{{owner}}</td>
 			<td id="{{project_id}}-{{narrative_id}}_users"></td>
 			<td>{{project_name}}</td>
