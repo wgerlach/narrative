@@ -368,7 +368,7 @@
             callback: function(results) {
                 //redirect to the narrative page
                 var userId = $("#login-widget").kbaseLogin("get_kbase_cookie", "user_id");
-                window.location.href = "http://narrative.kbase.us/"+userId+"_"+project_id+"."+name;
+                window.location.href = "http://narrative.kbase.us/narrative/user_test/"+userId+"_"+project_id+"."+name;
             }
         }); 
         
