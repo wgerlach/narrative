@@ -1,6 +1,7 @@
 """
 Installer for KBase narrative Python libraries
 """
+import glob
 import os
 import re
 import sys
@@ -17,6 +18,32 @@ if not m:
     print("Error getting description from README.md")
     sys.exit(1)
 long_desc = m.groups()[0].strip()
+
+
+def create_run_notebook_script(target_dir="/", profile="narrative"):
+    _op = os.path
+    script = "kbase_notebook"
+    
+    # working dir is directory of this script
+    work_dir = _op.dirname(_op.realpath(__file__))
+    # venv_dir is where the user's virtual env is located
+    venv_dir = os.environ['VIRTUAL_ENV']
+
+    # Load template.
+    tmpl_text = open(_op.join(work_dir, script + ".tmpl")).read()
+
+    # Write script.
+    script_text = tmpl_text.format(venv_dir=venv_dir, cur_dir=work_dir, profile=profile)
+    script_file = _op.join(target_dir, script)
+    open(script_file, "w").write(script_text)
+    os.chmod(script_file, 0755)
+
+    print("Wrote {}".format(script_file))
+    
+if "install" in sys.argv:
+    opath = os.path.join(os.environ['VIRTUAL_ENV'], "bin")
+    create_run_notebook_script(target_dir=opath)
+    
 
 # Do the setup
 setup(

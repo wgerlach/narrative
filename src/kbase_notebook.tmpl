@@ -1,0 +1,38 @@
+#!/bin/bash
+
+function usage () {{
+    printf "Run IPython notebook with KBase profile and options.\n\n"
+    printf "Usage: kbase_notebook [-h|--help] [-p|--proxy base] ...\n"
+    printf "  -h, --help        Print this message\n"
+    printf "  -p, --proxy base  Run behind reverse proxy server at URL /narrative/<base>\n"
+    printf " ...                Remaining options are passed to ipython\n"
+    exit 0
+}}
+
+if [ "$1" = "notebook" ]; then
+    shift
+elif [ $1 = "-h" -o "$1" = "--help" ]; then
+    usage
+fi
+
+isproxy=no
+if [ "$1" = "-p" -o "$1" = "--proxy" ]; then
+    printf "Proxy server mode\n"
+    shift
+    if [ "x$1" = "x" ]; then
+        printf "ERROR: Proxy server requires one argument for base dir\n"
+        exit 1
+    fi
+    proxy="$1"; shift
+    isproxy=yes
+fi
+
+source {venv_dir}/bin/activate
+export NARRATIVEDIR={cur_dir}
+export IPYTHONDIR=$NARRATIVEDIR/notebook/ipython_profiles
+
+if [ $isproxy = no ]; then
+    ipython notebook $* --NotebookManager.notebook_dir=~/.narrative --profile={profile}
+else
+    ipython notebook $* --profile={profile} --NotebookApp.base_project_url="/narrative/$proxy" --NotebookApp.base_kernel_url="/narrative/$proxy" --NotebookApp.open_browser="False" --ip="*"
+fi
