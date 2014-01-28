@@ -84,7 +84,7 @@ var IPython = (function (IPython) {
                     label : 'Insert Cell Above',
                     icon : 'icon-circle-arrow-up',
                     callback : function () {
-                        IPython.notebook.insert_cell_above('code');
+                        IPython.notebook.insert_cell_above('markdown');
                         }
                 },
                 {
@@ -92,7 +92,7 @@ var IPython = (function (IPython) {
                     label : 'Insert Cell Below',
                     icon : 'icon-circle-arrow-down',
                     callback : function () {
-                        IPython.notebook.insert_cell_below('code');
+                        IPython.notebook.insert_cell_below('markdown');
                         }
                 },
             ],'insert_above_below');
@@ -122,7 +122,7 @@ var IPython = (function (IPython) {
             .append($('<select/>')
                 .attr('id','cell_type')
                 // .addClass('ui-widget-content')
-                .append($('<option/>').attr('value','code').text('Code'))
+                //.append($('<option/>').attr('value','code').text('Code'))
                 .append($('<option/>').attr('value','markdown').text('Markdown'))
                 .append($('<option/>').attr('value','raw').text('Raw Text'))
                 .append($('<option/>').attr('value','heading1').text('Heading 1'))

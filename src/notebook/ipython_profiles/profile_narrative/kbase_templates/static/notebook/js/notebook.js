@@ -91,7 +91,7 @@ var IPython = (function (IPython) {
         var end_space = $('<div/>').addClass('end_space');
         end_space.dblclick(function (e) {
             var ncells = that.ncells();
-            that.insert_cell_below('code',ncells-1);
+            that.insert_cell_below('markdown',ncells-1);
         });
         this.element.append(this.container);
         this.container.append(end_space);
@@ -108,7 +108,7 @@ var IPython = (function (IPython) {
 
         $([IPython.events]).on('set_next_input.Notebook', function (event, data) {
             var index = that.find_cell_index(data.cell);
-            var new_cell = that.insert_cell_below('code',index);
+            var new_cell = that.insert_cell_below('markdown',index);
             new_cell.set_text(data.text);
             that.dirty = true;
         });
@@ -172,7 +172,7 @@ var IPython = (function (IPython) {
                 that.execute_selected_cell();
                  // Only insert a new cell, if we ended up in an already populated cell
                 if (/\S/.test(that.get_selected_cell().get_text()) == true) {
-                    that.insert_cell_above('code');
+                    that.insert_cell_above('markdown');
                 }
                 return false;
             } else if (event.which === key.ENTER && event.ctrlKey) {
@@ -203,12 +203,12 @@ var IPython = (function (IPython) {
                 return false;
             } else if (event.which === 65 && that.control_key_active) {
                 // Insert code cell above selected = a
-                that.insert_cell_above('code');
+                that.insert_cell_above('markdown');
                 that.control_key_active = false;
                 return false;
             } else if (event.which === 66 && that.control_key_active) {
                 // Insert code cell below selected = b
-                that.insert_cell_below('code');
+                that.insert_cell_below('markdown');
                 that.control_key_active = false;
                 return false;
             } else if (event.which === 89 && that.control_key_active) {
@@ -1415,7 +1415,7 @@ var IPython = (function (IPython) {
             cell.select_all();
         } else {
             if ((cell_index === (that.ncells()-1)) && default_options.add_new) {
-                that.insert_cell_below('code');
+                that.insert_cell_below('markdown');
                 // If we are adding a new cell at the end, scroll down to show it.
                 that.scroll_to_bottom();
             } else {
@@ -1742,7 +1742,7 @@ var IPython = (function (IPython) {
     Notebook.prototype.load_notebook_success = function (data, status, xhr) {
         this.fromJSON(data);
         if (this.ncells() === 0) {
-            this.insert_cell_below('code');
+            this.insert_cell_below('markdown');
         };
         this.set_dirty(false);
         this.select(0);
