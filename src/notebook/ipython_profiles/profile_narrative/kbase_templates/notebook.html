@@ -341,14 +341,12 @@ class="notebook_app"
 <script src="{{ static_url("kbnetwork/js/force-directed.js") }}" type="text/javascript" charset="utf-8"></script>
 <script src="{{ static_url("kbmanhattan/js/manhattan.js") }}" type="text/javascript" charset="utf-8"></script>
 
-<script src="{{ static_url("kbvis/ext/requirejs/2.1.9require.js") }}" data-main="{{ static_url("kbvis/src/kbpaths.js") }}"
-	type="text/javascript" charset="utf-8"></script>
-
 <script>
+
 $(function() {
   var original = $;
   require(['kbpaths'], function() {
-    require(['vis'], function() {
+    require(['jquery', 'vis'], function() {
       var newJQ = $;
       $ = original;
       for (prop in newJQ.fn) {
@@ -357,6 +355,7 @@ $(function() {
           $.fn[prop] = newJQ.fn[prop];
         }
       }
+
     });
   });
 });

@@ -14,7 +14,7 @@
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
     <link rel="stylesheet" href="{{static_url("components/jquery-ui/themes/smoothness/jquery-ui.min.css") }}" type="text/css" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+
     {% block stylesheet %}
     {% block lesscss %}
 	    {% if use_less %}
@@ -27,14 +27,18 @@
     <link rel="stylesheet" href="{{ static_url("custom/custom.css") }}" type="text/css" />
     <link rel="stylesheet" href="{{ static_url("kbase/css/kbaseStylesheet.css") }}" type="text/css" />
     <link rel="stylesheet" href="{{ static_url("kbase/css/narrative.css") }}" type="text/css" />
-    <link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+    <!--<link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">-->
+    <link href="{{ static_url("kbvis/ext/font-awesome/4.0.3/css/font-awesome.min.css") }}" rel="stylesheet">
+    <link href="{{ static_url("kbvis/ext/bootstrap/3.0.3/css/bootstrap.min.css") }}" rel="stylesheet">
     <link rel="stylesheet" href="{{ static_url("kbase/css/kbaseNarrFunc.css") }}" type="text/css" />
-    <script src="{{static_url("components/requirejs/require.js") }}" type="text/javascript" charset="utf-8"></script>
+    <!--<script src="{{static_url("components/requirejs/require.js") }}" type="text/javascript" charset="utf-8"></script>
     <script>
       require.config({
           baseUrl: '{{static_url() }}',
       });
-    </script>
+    </script>-->
+    <script src="{{static_url("components/requirejs/require.js") }}" data-main="{{ static_url("kbvis/src/kbpaths") }}"
+	    type="text/javascript" charset="utf-8"></script>
 
     {% block meta %}
     {% endblock %}
@@ -51,7 +55,7 @@
 </noscript>
 
 <!--
-<header role="banner">      
+<header role="banner">
     <div id="logo">
         <a href="http://www.kbase.us"><img src="{{static_url("kbase/images/kbase_logo.png")}}" alt="KBase User Home" /></a>
     </div>
@@ -62,14 +66,14 @@
             <li id="search_nav">
                     <a href="#">Search</a>
                     <input type="text" name="search_terms" id="search_terms" placeholder="Search the KBase Central Data Store"></input>
-                    
-                
+
+
             </li>
         </ul>
     </nav>
 -->
 <header id="header_banner" role="banner">
-  <div id="navrow" class="row">     
+  <div id="navrow" class="row">
     <div id="logo" class="col-sm-1">
       <a href="http://narrative.kbase.us/home.shtml"><img src="static/kbase/images/kbase_logo.png" alt="KBase User Home" /></a>
     </div>
@@ -85,7 +89,7 @@
     </div>
 
     {% block login_widget %}
-    
+
     <div id="login-info" class="pull-right">
       <div id="login-widget">
       </div>
