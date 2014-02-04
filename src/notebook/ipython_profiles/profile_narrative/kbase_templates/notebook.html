@@ -5,7 +5,7 @@
     {% if mathjax_url %}
         <script type="text/javascript" src="{{mathjax_url}}?config=TeX-AMS_HTML-full&delayStartupUntil=configured" charset="utf-8"></script>
     {% endif %}
-    
+
     <script type="text/javascript">
         // MathJax disabled, set as null to distingish from *missing* MathJax,
         // where it will be undefined, and should prompt a dialog later.
@@ -78,7 +78,7 @@ class="notebook_app"
                                             </ul>
                                         </li>
                                         <li class="divider"></li>
-                                        
+
                                         <li id="kill_and_exit"><a href="#" >Close and halt</a></li>
                                     </ul>
                                 </li>
@@ -180,13 +180,13 @@ class="notebook_app"
         <div id="kb-ws">
         </div>
         <!-- <div class="kb-ws-browser-link">
-            See more in the 
+            See more in the
             <a href="http://140.221.84.142/" target="_blank">workspace browser</a>.
         </div>
     -->
         <div id="function-panel" class="left-pane"></div>
         <div id="kb-function-help"></div>
-        
+
      </div>
 
      <div id="content-column">
@@ -223,8 +223,8 @@ class="notebook_app"
     </div>
 </div>
 
-    <!-- 
-        Show details for 1 object in separate, modal, box 
+    <!--
+        Show details for 1 object in separate, modal, box
      -->
     <div id="kb-obj" class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="object-info" aria-hidden="true">
         <div class="modal-dialog">
@@ -340,6 +340,27 @@ class="notebook_app"
 <script src="{{ static_url("kbnetwork/js/datavis.js") }}" type="text/javascript" charset="utf-8"></script>
 <script src="{{ static_url("kbnetwork/js/force-directed.js") }}" type="text/javascript" charset="utf-8"></script>
 <script src="{{ static_url("kbmanhattan/js/manhattan.js") }}" type="text/javascript" charset="utf-8"></script>
+
+<script src="{{ static_url("kbvis/ext/requirejs/2.1.9require.js") }}" data-main="{{ static_url("kbvis/src/kbpaths.js") }}"
+	type="text/javascript" charset="utf-8"></script>
+
+<script>
+$(function() {
+  var original = $;
+  require(['kbpaths'], function() {
+    require(['vis'], function() {
+      var newJQ = $;
+      $ = original;
+      for (prop in newJQ.fn) {
+        if (prop.match(/^kbase/)) {
+          $[prop] = newJQ.fn[prop];
+          $.fn[prop] = newJQ.fn[prop];
+        }
+      }
+    });
+  });
+});
+</script>
 
 <!-- Standard IPython Notebook Javascript -->
 
