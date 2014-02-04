@@ -21,7 +21,9 @@
 (function ($) {
     var KBase;
     var ucfirst = function(string) {
-        return string.charAt(0).toUpperCase() + string.slice(1);
+        if (string != undefined && string.length) {
+            return string.charAt(0).toUpperCase() + string.slice(1);
+        }
     };
 
     var willChangeNoteForName = function(name) {
@@ -51,13 +53,13 @@
         }
         else {
             return {
-                    setter : 'text',
-                    getter : 'text'
+                    setter : 'html',
+                    getter : 'html'
                 }
         }
     };
 
-    makeBindingCallback = function(elem, $target, attribute, transformers, accessors) {
+    var makeBindingCallback = function(elem, $target, attribute, transformers, accessors) {
 
         return $.proxy(function (e, vals) {
             e.preventDefault();
@@ -79,7 +81,7 @@
         }, $(elem))
     };
 
-    makeBindingBlurCallback = function(elem, $target, attribute, transformers, accessors) {
+    var makeBindingBlurCallback = function(elem, $target, attribute, transformers, accessors) {
 
         return $.proxy(function (e, vals) {
 
@@ -136,12 +138,13 @@
                 var setter = $target.__attributes[attribute].setter;
 
                 $target[setter](newVal);
+                this.data('kbase_bindingValue', this[accessors.getter]());
             }
 
         }, $(elem))
     };
 
-    makeBindingFocusCallback = function(elem, transformers, accessors) {
+    var makeBindingFocusCallback = function(elem, transformers, accessors) {
 
         return $.proxy( function (e) {
             e.preventDefault();
@@ -280,7 +283,10 @@
 
 
     var widgetRegistry = {};
-    if (KBase === undefined) {
+    if (KBase == undefined) {
+        KBase = window.KBase;
+    }
+    if (window.KBase === undefined) {
         KBase = window.KBase = {
             _functions : {
 
@@ -623,7 +629,8 @@
 
                 for (attribute in this.__attributes) {
                     if (this.options[attribute] != undefined) {
-                        this.setValueForKey(attribute, this.options[attribute]);
+                        var setter = this.__attributes[attribute].setter;
+                        this[setter](this.options[attribute]);
                     }
                 }
 
@@ -679,6 +686,22 @@
                     return this.valueForKey(attribute);
                 },
 
+            setValuesForKeys : function (obj) {
+
+                var objCopy = $.extend({}, obj);
+
+                for (attribute in this.__attributes) {
+                    if (objCopy[attribute] != undefined) {
+                        var setter = this.__attributes[attribute].setter;
+                        this[setter](objCopy[attribute]);
+                        delete objCopy[attribute];
+                    }
+                }
+
+                this.options = $.extend(this.options, objCopy);
+
+            },
+
             /**
              * Sets data.
              * @param {Object} key The key for the data
@@ -717,6 +740,7 @@
                     $elem.find('[id]'),
                     function(idx) {
                         $target.data($(this).attr('id'), $(this));
+                        $(this).attr('data-id', $(this).attr('id'));
                         $(this).removeAttr('id');
                         }
                 );
