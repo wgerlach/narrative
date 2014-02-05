@@ -2,7 +2,7 @@
  * Widget to display a table of data objects from a kbase workspace.
  *
  * Options:
- *    ws_id - the name of the workspace to show in this widget
+ *    wsId - the name of the workspace to show in this widget
  *    loadingImage - an image to show in the middle of the widget while loading data
  *    notLoggedInMsg - a string to put in the middle of the widget when not logged in.
  *
@@ -31,7 +31,7 @@
         options: {
             loadingImage: "static/kbase/images/ajax-loader.gif",
             notLoggedInMsg: "Please log in to view a workspace.",
-            workspaceURL: "http://140.221.84.209:7058", // "http://kbase.us/services/ws",
+            workspaceURL: "https://kbase.us/services/ws", // "http://kbase.us/services/ws",
             wsBrowserURL: "http://140.221.85.168/landing-pages/#/ws/",
             landingPageURL: "http://140.221.85.168/landing-pages/#/",
             container: null,
@@ -48,8 +48,8 @@
              * This should be triggered if something wants to know what data is loaded from the current workspace
              */
             $(document).on(
-                'dataLoadedQuery.Narrative', $.proxy(function(e, params, callback) {
-                    var objList = this.getLoadedData(params);
+                'dataLoadedQuery.Narrative', $.proxy(function(e, params, ignoreVersion, callback) {
+                    var objList = this.getLoadedData(params, ignoreVersion);
                     if (callback) {
                         callback(objList);
                     }
@@ -74,7 +74,7 @@
             $(document).on(
                 'workspaceQuery.Narrative', $.proxy(function(e, callback) {
                     if (callback) {
-                        callback(this.ws_id);
+                        callback(this.wsId);
                     }
                 }, 
                 this)
@@ -86,7 +86,6 @@
              */
             $(document).on(
                 'dataInfoClicked.Narrative', $.proxy(function(e, workspace, id) {
-                    console.log('invoked dataInfoClicked.Narrative on ' + workspace + ' ' + id);
                     this.showInfoModal(workspace, id);
                 }, 
                 this)
@@ -138,42 +137,68 @@
          */
         createStructure: function() {
             /*********** OUTER STRUCTURE ***********/
+
+            /**
+             * The outer structure is now a Bootstrap Panel.
+             * So it's got a panel-heading (just the blue Data part and refresh button)
+             * a panel-body - everything else
+             * - no footer
+             */
+
+
+
             // header bar.
-            this.$elem.append($('<div>')
-                              .addClass('kb-function-header')
+            var $headerDiv = $('<div>')
                               .append('Data')
                               .append($('<button>')
-                                      .addClass('btn btn-xs btn-default pull-right')
+                                      .addClass('btn btn-xs btn-default kb-ws-refresh-btn')
                                       .css({'margin-top': '-4px',
                                             'margin-right': '4px'})
                                       .click($.proxy(function(event) { this.refresh(); }, this))
                                       .append($('<span>')
-                                              .addClass('glyphicon glyphicon-refresh'))));
+                                              .addClass('glyphicon glyphicon-refresh')));
 
             // encapsulating data panel - all the data-related stuff goes in here.
             // this way, it can all be hidden easily.
             this.$dataPanel = $('<div id="data-tabs">');
-            this.$elem.append(this.$dataPanel);
+//            this.$elem.append(this.$dataPanel);
 
             // a loading panel that just has a spinning gif sitting in the middle.
             this.$loadingPanel = $('<div>')
                                  .addClass('kb-data-loading')
                                  .append('<img src="' + this.options.loadingImage + '">')
                                  .hide();
-            this.$elem.append(this.$loadingPanel);
+//            this.$elem.append(this.$loadingPanel);
 
             // Something similar for the info modal
             this.$infoModalLoadingPanel = $('<div>')
                                  .addClass('kb-data-loading')
                                  .append('<img src="' + this.options.loadingImage + '">')
                                  .hide();
+
+            // this just sits outside and gets crammed into the info modal if necessary.
             this.$infoModalError = $('<div>').hide();
 
             // The error panel should overlap everything.
             this.$errorPanel = $('<div>')
                                .addClass('kb-error')
                                .hide();
-            this.$elem.append(this.$errorPanel);
+//            this.$elem.append(this.$errorPanel);
+
+            this.$elem.append($('<div>')
+                              .addClass('panel panel-primary')
+                              .append($('<div>')
+                                      .addClass('panel-heading')
+                                      .append($('<div>')
+                                              .addClass('panel-title')
+                                              .css({'text-align': 'center'})
+                                              .append($headerDiv)))
+                              .append($('<div>')
+                                      .addClass('panel-body kb-narr-panel-body')
+                                      .append(this.$dataPanel)
+                                      .append(this.$loadingPanel)
+                                      .append(this.$errorPanel)));
+            
 
 
             /*********** MAIN DATA TABLES ***********/
@@ -578,7 +603,7 @@
          * }
          * @returns a list of data objects
          */
-        getLoadedData: function(type) {
+        getLoadedData: function(type, ignoreVersion) {
             if (!type || type.length === 0)
                 return this.loadedData;
 
@@ -589,8 +614,33 @@
             if (Object.prototype.toString.call(type) === '[object Array]') {
                 for (var i=0; i<type.length; i++) {
                     var dataType = type[i];
-                    if (this.loadedData[dataType])
-                        dataSet[dataType] = this.loadedData[dataType];
+
+                    // If we're ignoring the version, strip the version off
+                    // the end of the query data type
+                    if (ignoreVersion) {
+                        var unversionType = /(\S+)-\d+\.\d+/.exec(dataType);
+
+                        if (unversionType && unversionType[1])
+                            dataType = unversionType[1];
+
+                        // turn the dataType's . into \.
+                        // then build the regex /^datatype/
+                        // so it'll look like /^KBaseGenomes\.Genome/ for example
+                        var typeRegex = new RegExp("^" + dataType.replace(/\./g, '\\.'));
+
+                        for (var typeName in this.loadedData) {
+                            if (typeRegex.test(typeName)) {
+                                if (!dataSet[dataType])
+                                    dataSet[dataType] = [];
+                                dataSet[dataType] = dataSet[dataType].concat(this.loadedData[typeName]);
+                            }
+                        }
+                    }
+                    // Otherwise, just look for the match.
+                    else {
+                        if (this.loadedData[dataType])
+                            dataSet[dataType] = this.loadedData[dataType];
+                    }
                 }
             }
 

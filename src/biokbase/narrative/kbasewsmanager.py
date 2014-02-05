@@ -73,7 +73,7 @@ class KBaseWSNotebookManager(NotebookManager):
     Notebooks are identified with workspace identifiers of the format
     {workspace_name}.{object_name}
     """
-    kbasews_uri = Unicode('http://140.221.84.209:7058/', config=True, help='Workspace service endpoint URI')
+    kbasews_uri = Unicode('https://kbase.us/services/ws/', config=True, help='Workspace service endpoint URI')
 
     ipynb_type = Unicode(u'ipynb')
     allowed_formats = List([u'json'])
@@ -131,7 +131,7 @@ class KBaseWSNotebookManager(NotebookManager):
         all = ws_util.get_wsobj_meta( wsclient)
 
         self.mapping = {
-            ws_id : "%s/%s" % (all[ws_id]['workspace'],all[ws_id]['meta']['name'])
+            ws_id : "%s/%s" % (all[ws_id]['workspace'],all[ws_id]['meta'].get('name',"undefined"))
             for ws_id in all.keys()
         }
         self.rev_mapping = { self.mapping[ ws_id] : ws_id for ws_id in self.mapping.keys() }
@@ -288,7 +288,7 @@ class KBaseWSNotebookManager(NotebookManager):
                             self.kbid_regex.match(paramval)):
                             dep = "%s %s" % ( allparams[param]['type'], paramval)
                         else:
-                            dep = "%s %s/%s" % ( allparams[param]['type'], ws, paramval)
+                            dep = "%s %s" % ( allparams[param]['type'], paramval)
                         deps.add(dep)
                     except KeyError:
                         continue
