@@ -94,7 +94,8 @@ var IPython = (function (IPython) {
             },
             mode: 'ipython',
             theme: 'ipython',
-            matchBrackets: true
+            matchBrackets: true,
+	    readOnly : 'nocursor'
         }
     };
 
