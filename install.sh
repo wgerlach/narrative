@@ -97,6 +97,10 @@ source $installPath/$venv/bin/activate
 $PYTHON setup.py install
 cd ..
 
+# Delete "security" directory that is generated IPython at runtime, it can
+# cause odd permission issues in runtime container
+rm -rf "$( cd $(dirname ${BASH_SOURCE[0]}) && pwd)/src/notebook/ipython_profiles/profile_narrative/security"
+
 #printf "Installing 'biokbase' package into the virtual environment $venv... \n"
 #cd src/biokbase
 #$PYTHON setup.py install
@@ -119,6 +123,8 @@ printf "Creating start script for KBase narrative running behind reverse proxy s
 printf '#!/bin/bash
 source %s/bin/activate
 export NARRATIVEDIR=%s
+export HOME=/tmp
+export MPLCONFIGDIR=/tmp
 export IPYTHONDIR=$NARRATIVEDIR/notebook/ipython_profiles
 
 ipython notebook --profile=narrative --NotebookApp.base_project_url="/narrative" --NotebookApp.base_kernel_url="/narrative" --NotebookApp.open_browser="False" --ip="*"
