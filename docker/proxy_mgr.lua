@@ -321,55 +321,67 @@ set_proxy = function(self)
 		     response["msg"] = "failed to get post args: "
 		     ngx.status = ngx.HTTP_BAD_REQUEST
 		  else
-		     for key, val in pairs(args) do
-			key2 = string.match( key, "^"..key_regex.."$")
-			val2 = string.match( val, "^"..val_regex.."$")
-			if key2 ~= key then
-			   response["msg"] = "malformed key: " .. key
-			   ngx.status = ngx.HTTP_BAD_REQUEST
-			elseif proxy_map:get(key) then
-			   response["msg"] = "entry already exists: " .. key
-			   ngx.status = ngx.HTTP_BAD_REQUEST
-			elseif val ~="" and val2 ~= val then
-			   response["msg"] = "malformed value : " .. val
-			   ngx.status = ngx.HTTP_BAD_REQUEST
-			elseif type(val) == "table" then
-			   response["msg"] = "bad post argument: " .. key
-			   ngx.status = ngx.HTTP_BAD_REQUEST
-			   break
-			elseif val == "" then
-			   -- Spin up a new container if the dest ip:port is empty
-			   -- check to see if NGX status reports an error
-			   -- (real exception handling should be added here!)
-			   ngx.log( ngx.NOTICE, "Inserting: " .. key .. " -> " .. val)
-			   val = new_container(key)
-			   if ngx.status == ngx.HTTP_INTERNAL_SERVER_ERROR then
-			      response["msg"] = val
-			      break
-			   end
-			   argc = argc + 1
-			else
-			   argc = argc + 1
-			   ngx.log( ngx.NOTICE, "Inserting: " .. key .. " -> " .. val)
-			   success, err, force = proxy_map:add(key, val)
-			   if not success then
+		     do
+			local f,s,var = pairs(args)
+			-- we cannot use a for loop here because the non-blocking
+			-- calls may try to yield to co-routines that are outside of
+			-- a C-call boundary. This isn't an issue with the JIT,
+			-- but is for the interpreter
+			-- see: https://github.com/openresty/lua-nginx-module/issues/208
+			-- for key, val in pairs(args) do
+			while true do
+			   local key, val = f(s,var)
+			   if key == nil then break end
+			   var = key
+			   key2 = string.match( key, "^"..key_regex.."$")
+			   val2 = string.match( val, "^"..val_regex.."$")
+			   if key2 ~= key then
+			      response["msg"] = "malformed key: " .. key
 			      ngx.status = ngx.HTTP_BAD_REQUEST
-			      response["msg"] = "key insertion error " .. key .. " : " ..err
-			      ngx.log( ngx.WARN, "Failed insertion: " .. key .. " -> " .. val)
+			   elseif proxy_map:get(key) then
+			      response["msg"] = "entry already exists: " .. key
+			      ngx.status = ngx.HTTP_BAD_REQUEST
+			   elseif val ~="" and val2 ~= val then
+			      response["msg"] = "malformed value : " .. val
+			      ngx.status = ngx.HTTP_BAD_REQUEST
+			   elseif type(val) == "table" then
+			      response["msg"] = "bad post argument: " .. key
+			      ngx.status = ngx.HTTP_BAD_REQUEST
+			      break
+			   elseif val == "" then
+			      -- Spin up a new container if the dest ip:port is empty
+			      -- check to see if NGX status reports an error
+			      -- (real exception handling should be added here!)
+			      ngx.log( ngx.NOTICE, "Inserting: " .. key .. " -> " .. val)
+			      val = new_container(key)
+			      if ngx.status == ngx.HTTP_INTERNAL_SERVER_ERROR then
+				 response["msg"] = val
+				 break
+			      end
+			      argc = argc + 1
+			   else
+			      argc = argc + 1
+			      ngx.log( ngx.NOTICE, "Inserting: " .. key .. " -> " .. val)
+			      success, err, force = proxy_map:add(key, val)
+			      if not success then
+				 ngx.status = ngx.HTTP_BAD_REQUEST
+				 response["msg"] = "key insertion error " .. key .. " : " ..err
+				 ngx.log( ngx.WARN, "Failed insertion: " .. key .. " -> " .. val)
+			      end
+			      -- add an entry for proxy state
+			      success, err, force = proxy_state:add(key, true)
+			      success, err, force = proxy_last:set(key,os.time())
 			   end
-			   -- add an entry for proxy state
-			   success, err, force = proxy_state:add(key, true)
-			   success, err, force = proxy_last:set(key,os.time())
 			end
-		     end
-		     -- make sure we had at least 1 legit entry
-		     if argc == 0 and response["msg"] == nil then
-			response["msg"] = "No legitimate keys found"
-		     end
-
-		     if response["msg"] == nil then
-			ngx.status = ngx.HTTP_CREATED
-			response["msg"] = "Successfully added "..argc.." keys"
+			-- make sure we had at least 1 legit entry
+			if argc == 0 and response["msg"] == nil then
+			   response["msg"] = "No legitimate keys found"
+			end
+			
+			if response["msg"] == nil then
+			   ngx.status = ngx.HTTP_CREATED
+			   response["msg"] = "Successfully added "..argc.." keys"
+			end
 		     end
 		  end
 		  ngx.say(json.encode( response ))
@@ -446,7 +458,7 @@ set_proxy = function(self)
 			response = "Marked for reaping"
 			-- mark the proxy instance for deletion
 			proxy_state:set(key,false)
-			ngx.log( ngx.NOTICE, "Makred for reaping: " .. key )
+			ngx.log( ngx.NOTICE, "Marked for reaping: " .. key )
 		     end
 		  else 
 		     response = "No key specified"
@@ -576,8 +588,8 @@ discover = function()
 new_container = function( session_id)
 		   local res = nil
 		   ngx.log( ngx.INFO, "Creating new notebook instance for ",session_id )
-		   local ok,res = pcall(notemgr.launch_notebook,session_id)
-		   if ok then
+		   res = notemgr.launch_notebook(session_id)
+		   if res then
 		      ngx.log( ngx.INFO, "New instance at: " .. res)
 		      -- do a none blocking sleep for 5 seconds to allow the instance to spin up
 		      ngx.sleep(5)

@@ -35,10 +35,18 @@ M.docker_remote_url = 'http://127.0.0.1:65000'
 
 -- Non-blocking version of the docker.client.containers() method using
 -- resty.http
--- pass in any optional args to be passed in via the GET
 local function containers(arg)
-   local url = "/containers/json"
-   local method = "GET"
+   local req = {
+      url = M.docker_remote_url .. "/containers/json",
+      method = "GET"
+   }
+   -- ngx.log( ngx.ERR, p.write(req))
+   local ok, code,headers,status,body = httpclient:request(req)
+   if ok and code >= 200 and code < 300 then
+      return ok, json.decode(body)
+   else
+      return nil, body
+   end
 end
 
 -- Non-blocking version of the docker.client.containers() method using
@@ -46,9 +54,16 @@ end
 -- pass in any optional args to be passed in via the GET
 local function inspect_container(arg)
    assert(arg.id ~= nil, "id argument must be set")
-   local url = string.format("/containers/%s/json",arg.id)
-   local method = "GET"
-   return( httpclient:request{ url = url, method = method })
+   local req = {
+      url = string.format("%s/containers/%s/json",M.docker_remote_url, arg.id),
+      method = "GET"
+   }
+   local ok, code,headers,status,body = httpclient:request(req)
+   if ok and code >= 200 and code < 300 then
+      return ok, json.decode(body)
+   else
+      return nil, body
+   end
 end
 
 -- Non-blocking version of the docker.client.create_container() method using
@@ -56,9 +71,16 @@ end
 -- pass in any optional args to be passed in via the GET
 local function create_container(arg)
    assert(arg.body ~= nil, "body argument must be set")
-   local url = "/containers/create"
-   local method = "POST"
-   return( httpclient:request{ url = url, method = method })
+   local req = {
+      url = M.docker_remote_url .. "/containers/create",
+      method = "POST"
+   }
+   local ok, code,headers,status,body = httpclient:request(req)
+   if ok and code >= 200 and code < 300 then
+      return ok, json.decode(body)
+   else
+      return nil, body
+   end
 end
 
 -- Non-blocking version of the docker.client.start_container() method using
@@ -66,9 +88,16 @@ end
 -- pass in any optional args to be passed in via the GET
 local function start_container(arg)
    assert(arg.id ~= nil, "id argument must be set")
-   local url = string.format("/containers/%s/start",arg.id)
-   local method = "POST"
-   return( httpclient:request{ url = url, method = method })
+   local req = {
+      url = string.format("%s/containers/%s/start",M.docker_remote_url,arg.id),
+      method = "POST"
+   }
+   local ok, code,headers,status,body = httpclient:request(req)
+   if ok and code >= 200 and code < 300 then
+      return ok, json.decode(body)
+   else
+      return nil, body
+   end
 end
 
 -- Non-blocking version of the docker.client.stop_container() method using
@@ -76,9 +105,16 @@ end
 -- pass in any optional args to be passed in via the GET
 local function stop_container(arg)
    assert(arg.id ~= nil, "id argument must be set")
-   local url = string.format("/containers/%s/stop",arg.id)
-   local method = "POST"
-   return( httpclient:request{ url = url, method = method })
+   local req = {
+      url = string.format("%s/containers/%s/stop",M.docker_remote_url,arg.id),
+      method = "POST"
+   }
+   local ok, code,headers,status,body = httpclient:request(req)
+   if ok and code >= 200 and code < 300 then
+      return ok, json.decode(body)
+   else
+      return nil, body
+   end
 end
 
 -- Non-blocking version of the docker.client.remove_container() method using
@@ -86,9 +122,16 @@ end
 -- pass in any optional args to be passed in via the GET
 local function remove_container(arg)
    assert(arg.id ~= nil, "id argument must be set")
-   local url = string.format("/containers/%s",arg.id)
-   local method = "DELETE"
-   return( httpclient:request{ url = url, method = method })
+   local req = {
+      url = string.format("%s/containers/%s",M.docker_remote_url,arg.id),
+      method = "DELETE"
+   }
+   local ok, code,headers,status,body = httpclient:request(req)
+   if ok and code >= 200 and code < 300 then
+      return ok, json.decode(body)
+   else
+      return nil, body
+   end
 end
 
 --
@@ -97,11 +140,12 @@ end
 -- port 8888. Keyed on container name, value is IP:Port that can
 -- be fed into an nginx proxy target
 local function get_notebooks()
-   local ok, res = pcall(docker.client.containers,docker.client)
+   local ok, res, code,headers,status,body
+   ok,res = containers()
+   ngx.log( ngx.ERR, string.format("resty containers() body result: %s",p.write(res)))
    local portmap = {}
-   ngx.log( ngx.DEBUG, string.format("list containers result: %s",p.write(res.body)))
    if ok then
-      for index,container in pairs(res.body) do
+      for index,container in pairs(res) do
 	 -- we only care about containers matching repository_image and listening on the proper port
 	 first,last = string.find(container.Image,M.repository_image)
 	 if first == 1 then
@@ -116,7 +160,7 @@ local function get_notebooks()
       end
       return portmap
    else
-      local msg = string.format("Failed to fetch list of containers: %s",p.write(res.body))
+      local msg = string.format("Failed to fetch list of containers: %s",p.write(res))
       ngx.log(ngx.ERR,msg)
       error(msg)
    end
