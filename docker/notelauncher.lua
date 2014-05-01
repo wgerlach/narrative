@@ -16,6 +16,8 @@ local docker = require('docker')
 local json = require('json')
 local p = require('pl.pretty')
 local lfs = require('lfs')
+local httplib = require("resty.http")
+local httpclient = httplib:new()
 
 -- This is the repository name, can be set by whoever instantiates a notelauncher
 M.repository_image = 'sychan/narrative'
@@ -27,6 +29,67 @@ M.private_port = 8888
 -- This is the path to the syslog Unix socket listener in the host environment
 -- it is imported into the container via a Volumes argument
 M.syslog_src = '/dev/log'
+
+-- Base URL that the non-blocking docker remote api calls should use
+M.docker_remote_url = 'http://127.0.0.1:65000'
+
+-- Non-blocking version of the docker.client.containers() method using
+-- resty.http
+-- pass in any optional args to be passed in via the GET
+local function containers(arg)
+   local url = "/containers/json"
+   local method = "GET"
+end
+
+-- Non-blocking version of the docker.client.containers() method using
+-- resty.http
+-- pass in any optional args to be passed in via the GET
+local function inspect_container(arg)
+   assert(arg.id ~= nil, "id argument must be set")
+   local url = string.format("/containers/%s/json",arg.id)
+   local method = "GET"
+   return( httpclient:request{ url = url, method = method })
+end
+
+-- Non-blocking version of the docker.client.create_container() method using
+-- resty.http
+-- pass in any optional args to be passed in via the GET
+local function create_container(arg)
+   assert(arg.body ~= nil, "body argument must be set")
+   local url = "/containers/create"
+   local method = "POST"
+   return( httpclient:request{ url = url, method = method })
+end
+
+-- Non-blocking version of the docker.client.start_container() method using
+-- resty.http
+-- pass in any optional args to be passed in via the GET
+local function start_container(arg)
+   assert(arg.id ~= nil, "id argument must be set")
+   local url = string.format("/containers/%s/start",arg.id)
+   local method = "POST"
+   return( httpclient:request{ url = url, method = method })
+end
+
+-- Non-blocking version of the docker.client.stop_container() method using
+-- resty.http
+-- pass in any optional args to be passed in via the GET
+local function stop_container(arg)
+   assert(arg.id ~= nil, "id argument must be set")
+   local url = string.format("/containers/%s/stop",arg.id)
+   local method = "POST"
+   return( httpclient:request{ url = url, method = method })
+end
+
+-- Non-blocking version of the docker.client.remove_container() method using
+-- resty.http
+-- pass in any optional args to be passed in via the GET
+local function remove_container(arg)
+   assert(arg.id ~= nil, "id argument must be set")
+   local url = string.format("/containers/%s",arg.id)
+   local method = "DELETE"
+   return( httpclient:request{ url = url, method = method })
+end
 
 --
 --  Query the docker container for a list of containers and
