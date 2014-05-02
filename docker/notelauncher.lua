@@ -68,7 +68,6 @@ end
 
 -- Non-blocking version of the docker.client.create_container() method using
 -- resty.http
--- pass in any optional args to be passed in via the GET
 local function create_container(arg)
    assert(arg.body ~= nil, "body argument must be set")
    local req = {
@@ -128,7 +127,7 @@ local function remove_container(arg)
    }
    local ok, code,headers,status,body = httpclient:request(req)
    if ok and code >= 200 and code < 300 then
-      return ok, json.decode(body)
+      return ok, nil
    else
       return nil, body
    end
@@ -142,7 +141,7 @@ end
 local function get_notebooks()
    local ok, res, code,headers,status,body
    ok,res = containers()
-   ngx.log( ngx.ERR, string.format("resty containers() body result: %s",p.write(res)))
+   -- ngx.log( ngx.ERR, string.format("resty containers() body result: %s",p.write(res)))
    local portmap = {}
    if ok then
       for index,container in pairs(res) do
@@ -186,8 +185,9 @@ local function launch_notebook( name )
    if not ok and res.response.status >= 409 then
       -- conflict, try to delete it and then create it again
       ngx.log(ngx.ERR,string.format("conflicting notebook, removing notebook named: %s",name))   
-      ok, res = pcall( docker.client.remove_container, docker.client, { id = name })
-      ngx.log(ngx.ERR,string.format("response from remove_container: %s", p.write(res.response)))
+      -- ok, res = pcall( docker.client.remove_container, docker.client, { id = name })
+      ok, res = remove_container{ id = name }
+      ngx.log(ngx.ERR,string.format("response from remove_container: %s", p.write(res)))
       -- ignore the response and retry the create, and if it still errors, let that propagate
       ok, res = pcall(docker.client.create_container, docker.client, { payload = conf, name = name})
    end
@@ -211,10 +211,11 @@ local function launch_notebook( name )
       end      
       assert(res.status == 204, "Failed to start container " .. id .. " : " .. json.encode(res.body))
       -- get back the container info to pull out the port mapping
-      res = docker.client:inspect_container{ id=id}
-      --p.dump(res)
-      assert(res.status == 200, "Could not inspect new container: " .. id)
-      local ports = res.body.NetworkSettings.Ports
+      -- res = docker.client:inspect_container{ id=id}
+      ok, res = inspect_container{ id=id}
+      -- ngx.log( ngx.ERR,"non-blocking inspect_container results: " .. p.write(res))
+      assert(ok, "Could not inspect new container: " .. id)
+      local ports = res.NetworkSettings.Ports
       local ThePort = string.format("%d/tcp", M.private_port)
       assert( ports[ThePort] ~= nil, string.format("Port binding for port %s not found!",ThePort))
       return(string.format("%s:%d","127.0.0.1", ports[ThePort][1].HostPort))
@@ -230,15 +231,21 @@ end
 --
 local function remove_notebook( name )
    local portmap = get_notebooks()
-   assert(portmap[name], "Notebook by this name does not exist: " .. name)
+   if portmap[name] == nil then
+      return nil,  "Notebook by this name does not exist: " .. name
+   end
    local id = string.format('/%s',name)
    --ngx.log(ngx.INFO,string.format("removing notebook named: %s",id))
    local res = docker.client:stop_container{ id = id }
-   --ngx.log(ngx.INFO,string.format("response from stop_container: %d : %s",res.status,res.body))
-   assert(res.status == 204, "Failed to stop container: " .. json.encode(res.body))
-   res = docker.client:remove_container{ id = id}
-   --ngx.log(ngx.INFO,string.format("response from remove_container: %d : %s",res.status,res.body))
-   assert(res.status == 204, "Failed to remove container " .. id .. " : " .. json.encode(res.body))
+   ngx.log(ngx.ERR,string.format("response from stop_container: %d : %s",res.status,res.body))
+   if res.status ~= 204 then
+      return nil, "Failed to stop container: " .. json.encode(res.body)
+   end
+   ok, res = remove_container{ id = id}
+   ngx.log(ngx.ERR,string.format("response from remove_container: %s : %s",ok, p.write(res)))
+   if not ok then
+      return ok, "Failed to remove container " .. id .. " : " .. json.encode(res)
+   end
    return true
 end
 

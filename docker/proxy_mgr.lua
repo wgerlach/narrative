@@ -167,7 +167,7 @@ sweeper = function(self)
 		name = keys[key]
 		if proxy_state:get(name) == false then
 		   ngx.log( ngx.INFO, "sweeper removing ",name)
-		   local success, err = pcall( notemgr.remove_notebook, name)
+		   local success, err = notemgr.remove_notebook(name)
 		   if success then
 		      proxy_map:delete(name)
 		      proxy_state:delete(name)
@@ -181,7 +181,7 @@ sweeper = function(self)
 		      proxy_last_ip:delete(name)
 		      proxy_last:delete(name)
 		   else
-		      ngx.log( ngx.ERROR, string.format("error: %s", err))
+		      ngx.log( ngx.ERR, string.format("error: %s", p.write(err)))
 		   end
 		end
 	     end
@@ -402,9 +402,8 @@ set_proxy = function(self)
 		  else 
 		     local keys = proxy_map:get_keys() 
 		     for key = 1, #keys do
-			local last, flags = proxy_last:get(key)
 			response[keys[key]] = { proxy_target = proxy_map:get( keys[key]),
-						last_seen = os.date("%c",last),
+						last_seen = os.date("%c",proxy_last:get(keys[key])),
 						last_ip = proxy_last_ip:get(keys[key]),
 						active = tostring(proxy_state:get(keys[key]))
 					     }
