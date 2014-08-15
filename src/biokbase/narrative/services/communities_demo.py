@@ -481,14 +481,14 @@ def _run_picrust(meth, workspace, in_biom, out_name):
     meth.advance("Waiting on "+method_name)
     aresult = _get_awe_results(ajob['data']['id'])
     if not aresult:
-        return json.dumps({'header': 'ERROR:\nAWE error running QIIME'})
+        return json.dumps({'header': 'ERROR:\nAWE error running PICRUSt'})
     
     meth.advance("Storing BIOM in Workspace")
     last_task = aresult['tasks'][-1]
     name, info = last_task['outputs'].items()[0]
     data = {'name': name, 'created': time.strftime("%Y-%m-%d %H:%M:%S"), 'type': 'biom', 'data': _get_shock_data(info['node'])}
     _put_ws(workspace, out_name, CWS.profile, data=data)
-    text = "BIOM %s created for QIIME OTU picking of %s"%(out_name, in_biom)
+    text = "BIOM %s created from %s"%(out_name, in_biom)
     return json.dumps({'header': text})
 
 
@@ -553,14 +553,14 @@ def _run_qiime_otu_picking(meth, workspace, in_seq, in_metagenome , out_name):
     meth.advance("Waiting on "+method_name)
     aresult = _get_awe_results(ajob['data']['id'])
     if not aresult:
-        return json.dumps({'header': 'ERROR:\nAWE error running PICRUSt'})
+        return json.dumps({'header': 'ERROR:\nAWE error running QIIME'})
     
     meth.advance("Storing BIOM in Workspace")
     last_task = aresult['tasks'][-1]
     name, info = last_task['outputs'].items()[0]
     data = {'name': name, 'created': time.strftime("%Y-%m-%d %H:%M:%S"), 'type': 'biom', 'data': _get_shock_data(info['node'])}
     _put_ws(workspace, out_name, CWS.profile, data=data)
-    text = "Abundance Profile BIOM %s created for PICRUSt prediction of %s"%(out_name, in_seq)
+    text = "Abundance Profile BIOM %s created from %s"%(out_name, in_seq)
     return json.dumps({'header': text})
 
 
